@@ -1,0 +1,477 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { client, urlFor } from '../../lib/sanity';
+import { postBySlugQuery, relatedPostsQuery } from '../../lib/queries';
+import PortableTextWithTOC from '../../components/PortableTextWithTOC.tsx';
+import AudioPlayer from '../../components/AudioPlayer.astro';
+import ShareButtons from '../../components/ShareButtons.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import RelatedCarousel from '../../components/RelatedCarousel.astro';
+
+export async function getStaticPaths() {
+  const query = `*[_type == "post" && defined(slug.current)][]{ "slug": slug.current }`;
+  const posts = await client.fetch(query);
+  
+  return posts.map((post: any) => ({
+    params: { slug: post.slug },
+  }));
+}
+
+const { slug } = Astro.params;
+const post = await client.fetch(postBySlugQuery, { slug });
+
+if (!post) {
+  return Astro.redirect('/404');
+}
+
+// Fetch related articles
+let relatedPosts = [];
+if (post.category && post.category._id) {
+  relatedPosts = await client.fetch(relatedPostsQuery, {
+    categoryId: post.category._id,
+    postId: post._id
+  });
+}
+
+const formattedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric'
+});
+
+// Helper to extract text from portable text
+function extractText(blocks: any[]): string {
+  if (!blocks) return '';
+  return blocks
+    .filter(val => val._type === 'block')
+    .map(block => {
+      return block.children.map((child: any) => child.text).join('');
+    })
+    .join('\n\n');
+}
+
+const plainTextBody = extractText(post.body);
+const currentUrl = `https://brandforgeinc.com/blog/${slug}`;
+
+// Extract headings for TOC
+const tocHeadings = [];
+if (post.body) {
+  post.body.forEach((block: any) => {
+    if (block._type === 'block' && (block.style === 'h2' || block.style === 'h3')) {
+      const text = extractText([block]);
+      const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      tocHeadings.push({
+        text,
+        id,
+        level: block.style === 'h2' ? 2 : 3
+      });
+    }
+  });
+}
+
+// The TOC headings have been extracted above. We will use a separate React component for rendering them.
+---
+
+<Layout title={post.title} description={post.excerpt}>
+  <div id="progress-container" style="position: sticky; top: 80px; width: 100%; height: 4px; background-color: transparent; z-index: 99; margin-top: -4px;">
+    <div id="progress-bar" style="width: 0%; height: 100%; background-color: var(--orange); transition: width 0.1s ease-out;"></div>
+  </div>
+
+  <article class="blog-post">
+    <header class="post-header container">
+      <a href="/" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to all posts
+      </a>
+      
+      <div class="meta">
+        {post.category && (
+          <a href={`/category/${post.category.slug}`} class="tag tag-neutral">{post.category.title}</a>
+        )}
+        <span class="date">{formattedDate}</span>
+        <span style="color: var(--gray); font-size: var(--text-small);">•</span>
+        <span style="color: var(--gray); font-size: var(--text-small); font-weight: 600;">{post.readingTime ? Math.max(1, post.readingTime) : 1} min read</span>
+      </div>
+      
+      <h1 class="text-display post-title">{post.title}</h1>
+      
+      <div class="post-actions">
+        {post.author && (
+          <div class="author-info">
+            <div class="author-avatar">{(typeof post.author === 'string' ? post.author : (post.author.name || 'A')).charAt(0)}</div>
+            <div class="author-details">
+              <span class="author-label">Written By</span>
+              <span class="author-name">{typeof post.author === 'string' ? post.author : post.author.name}</span>
+            </div>
+          </div>
+        )}
+        <ShareButtons url={currentUrl} title={post.title} />
+      </div>
+    </header>
+
+    {post.coverImage && (
+      <div class="cover-image-container container">
+        <img 
+          src={urlFor(post.coverImage).width(2000).height(1125).url()} 
+          alt={post.coverImage.alt || post.title} 
+          class="cover-image"
+        />
+      </div>
+    )}
+
+    <div class="post-layout container">
+      <div class="post-main">
+        <div class="executive-summary">
+          <h3>Executive Summary</h3>
+          <p>{post.excerpt}</p>
+          <AudioPlayer textToRead={plainTextBody} />
+        </div>
+
+        <div class="prose">
+          <PortableTextWithTOC value={post.body} />
+        </div>
+
+        <div class="post-footer">
+          <ShareButtons url={currentUrl} title={post.title} />
+        </div>
+      </div>
+      
+      {tocHeadings.length > 0 && (
+        <aside class="toc-sidebar">
+          <div class="toc-sticky">
+            <h4>Table of Contents</h4>
+            <ul class="toc-list">
+              {tocHeadings.map((heading: any) => (
+                <li class={`toc-item level-${heading.level}`}>
+                  <a href={`#${heading.id}`}>{heading.text}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      )}
+    </div>
+  </article>
+
+  {relatedPosts.length > 0 && (
+    <section class="related-articles section-py bg-off-white">
+      <div class="container">
+        <h2 class="section-title">Related Articles</h2>
+        <RelatedCarousel posts={relatedPosts} />
+      </div>
+    </section>
+  )}
+
+  <script>
+    const updateProgressBar = () => {
+      const progressBar = document.getElementById('progress-bar');
+      if (!progressBar) return;
+
+      const windowScroll = document.documentElement.scrollTop || document.body.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (windowScroll / height) * 100;
+      progressBar.style.width = scrolled + '%';
+    };
+
+    window.addEventListener('scroll', updateProgressBar);
+    // Initial call in case page is loaded already scrolled
+    updateProgressBar();
+  </script>
+</Layout>
+
+<style>
+  .blog-post {
+    background-color: var(--white);
+    padding-bottom: var(--section-py);
+  }
+
+  .post-header {
+    padding-top: calc(var(--section-py) * 0.8);
+    padding-bottom: 3rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--zinc-800);
+    font-size: var(--text-label);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 2rem;
+    transition: color 0.2s ease;
+  }
+
+  .back-link:hover {
+    color: var(--orange);
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .date {
+    color: var(--gray);
+    font-size: var(--text-small);
+    font-weight: 600;
+  }
+
+  .post-title {
+    margin-bottom: 2.5rem;
+  }
+
+  .post-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .author-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .author-avatar {
+    width: 3rem;
+    height: 3rem;
+    background-color: var(--zinc-800);
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 1.25rem;
+  }
+
+  .author-details {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .author-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--gray);
+  }
+
+  .author-name {
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .cover-image-container {
+    margin-bottom: 4rem;
+  }
+
+  .cover-image {
+    width: 100%;
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .post-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  @media (min-width: 1024px) {
+    .post-layout {
+      grid-template-columns: 1fr 300px;
+    }
+  }
+
+  .post-main {
+    min-width: 0; /* Prevents overflow in grid */
+  }
+
+  /* Table of Contents */
+  .toc-sidebar {
+    display: none;
+  }
+
+  @media (min-width: 1024px) {
+    .toc-sidebar {
+      display: block;
+    }
+  }
+
+  .toc-sticky {
+    position: sticky;
+    top: 100px;
+    background-color: var(--off-white);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid var(--border);
+  }
+
+  .toc-sticky h4 {
+    font-family: var(--font-serif);
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+    color: var(--ink);
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .toc-item a {
+    color: var(--charcoal);
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    display: block;
+    line-height: 1.4;
+  }
+
+  .toc-item a:hover {
+    color: var(--orange);
+  }
+
+  .toc-item.level-3 {
+    padding-left: 1rem;
+    font-size: 0.8125rem;
+    opacity: 0.9;
+  }
+
+  .executive-summary {
+    background-color: var(--off-white);
+    padding: 2rem;
+    border-radius: 1rem;
+    margin-bottom: 3rem;
+    border-left: 4px solid var(--orange);
+  }
+
+  .executive-summary h3 {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    color: var(--ink);
+    margin-bottom: 1rem;
+  }
+
+  .executive-summary p {
+    font-size: 1.125rem;
+    color: var(--charcoal);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Basic Prose Styles */
+  .prose {
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: var(--charcoal);
+  }
+
+  .prose :global(h2) {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    color: var(--ink);
+  }
+
+  .prose :global(h3) {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: var(--ink);
+  }
+
+  .prose :global(p) {
+    margin-bottom: 1.5rem;
+  }
+
+  .prose :global(ul), .prose :global(ol) {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .prose :global(li) {
+    margin-bottom: 0.5rem;
+  }
+
+  .prose :global(a) {
+    color: var(--orange);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .prose :global(blockquote) {
+    border-left: 4px solid var(--orange);
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-style: italic;
+    color: var(--ink);
+  }
+  
+  .prose :global(img) {
+    border-radius: 0.75rem;
+    margin: 2rem 0;
+  }
+
+  .post-footer {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Related Articles */
+  .related-articles {
+    border-top: 1px solid var(--border);
+  }
+
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: var(--ink);
+    text-align: center;
+  }
+
+  .post-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  @media (min-width: 768px) {
+    .post-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3rem;
+    }
+  }
+</style>

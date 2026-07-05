@@ -1,0 +1,20 @@
+{
+  "name": "scratch",
+  "version": "1.0.0",
+  "description": "",
+  "main": "check_sanity.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@portabletext/block-tools": "^5.1.9",
+    "@sanity/block-tools": "^3.70.0",
+    "@sanity/client": "^7.23.0",
+    "@sanity/schema": "^6.3.0",
+    "jsdom": "^29.1.1"
+  }
+}

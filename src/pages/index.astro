@@ -1,0 +1,53 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PostFeed from '../components/PostFeed';
+import Carousel from '../components/Carousel.astro';
+import Sidebar from '../components/Sidebar.astro';
+import { client } from '../lib/sanity';
+import { postsQuery } from '../lib/queries';
+
+// Fetch initial posts during build
+const posts = await client.fetch(postsQuery, { start: 0, end: 12 });
+---
+
+<Layout title="Blog" description="BrandForge Blog - Insights & Updates">
+  <Carousel />
+
+  <section class="posts-section section-py">
+    <div class="container">
+      <div class="blog-layout">
+        <main class="main-content">
+          <h2 class="section-title">All Posts</h2>
+          <PostFeed client:load initialPosts={posts} />
+        </main>
+        
+        <aside class="sidebar-wrapper">
+          <Sidebar />
+        </aside>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .section-title {
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: var(--ink);
+  }
+
+  .blog-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  @media (min-width: 1024px) {
+    .blog-layout {
+      grid-template-columns: 1fr 350px;
+      gap: 4rem;
+    }
+  }
+
+</style>

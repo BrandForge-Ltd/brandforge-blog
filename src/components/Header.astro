@@ -1,0 +1,143 @@
+---
+import { client } from '../lib/sanity';
+import { categoriesQuery } from '../lib/queries';
+
+const categories = await client.fetch(categoriesQuery);
+---
+<header class="header">
+  <div class="container">
+    <nav class="nav">
+      <a href="/" class="logo-link">
+        <img src="/brandforge-logo.png" alt="BrandForge Logo" style="height: 32px;" />
+        <span class="logo-text">BLOG</span>
+      </a>
+      <div class="nav-links">
+        <a href="/" class="nav-link">Home</a>
+        
+        <div class="dropdown">
+          <button class="nav-link dropdown-toggle">Categories <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+          <div class="dropdown-menu">
+            {categories.map((cat: any) => (
+              <a href={`/category/${cat.slug}`} class="dropdown-item">{cat.title}</a>
+            ))}
+          </div>
+        </div>
+
+        <a href="https://brandforgeinc.com/services" class="nav-link">Services</a>
+        <a href="https://brandforgeinc.com" class="nav-link btn-link">Main Website</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .header {
+    background-color: var(--white);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 80px;
+  }
+
+  .logo-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .logo-text {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: var(--orange);
+    letter-spacing: -0.02em;
+    transform: translateY(2px);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .nav-link {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .nav-link:hover {
+    color: var(--orange);
+  }
+
+  .btn-link {
+    background-color: var(--zinc-800);
+    color: var(--white);
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+  }
+
+  .btn-link:hover {
+    background-color: var(--orange);
+    color: var(--white);
+  }
+
+  /* Dropdown */
+  .dropdown {
+    position: relative;
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 200px;
+    background-color: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.2s ease;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dropdown:hover .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .dropdown-item {
+    padding: 0.75rem 1rem;
+    color: var(--charcoal);
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .dropdown-item:hover {
+    background-color: var(--off-white);
+    color: var(--orange);
+  }
+</style>

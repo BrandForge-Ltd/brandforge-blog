@@ -1,0 +1,198 @@
+---
+import { client, urlFor } from '../lib/sanity';
+import { featuredPostsQuery } from '../lib/queries';
+
+const featuredPosts = await client.fetch(featuredPostsQuery);
+---
+{featuredPosts && featuredPosts.length > 0 && (
+  <section class="carousel-section">
+    <div class="carousel-container">
+      <div class="carousel-track" id="carouselTrack">
+        {featuredPosts.map((post: any) => (
+          <div class="carousel-slide group">
+            <a href={`/blog/${post.slug.current}`} class="carousel-card">
+              <div class="img-wrapper">
+                {post.coverImage ? (
+                  <img src={urlFor(post.coverImage).width(1200).height(600).url()} alt={post.title} />
+                ) : (
+                  <div class="placeholder"></div>
+                )}
+                <div class="overlay"></div>
+              </div>
+              <div class="slide-content">
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                  {post.category && (
+                    <span class="tag tag-primary">{post.category.title}</span>
+                  )}
+                  <span style="font-size: 0.875rem; font-weight: 500; opacity: 0.9;">
+                    {post.readingTime ? Math.max(1, post.readingTime) : 1} min read
+                  </span>
+                </div>
+                <h2 class="slide-title">{post.title}</h2>
+                <p class="slide-excerpt">{post.excerpt}</p>
+              </div>
+            </a>
+          </div>
+        ))}
+      </div>
+      
+      {featuredPosts.length > 1 && (
+        <div class="carousel-controls">
+          <button id="prevBtn" class="nav-btn" aria-label="Previous slide">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <button id="nextBtn" class="nav-btn" aria-label="Next slide">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+      )}
+    </div>
+  </section>
+)}
+
+<script>
+  const track = document.getElementById('carouselTrack');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  
+  if (track && prevBtn && nextBtn) {
+    const slideWidth = track.clientWidth;
+    let currentIndex = 0;
+    const maxIndex = track.children.length - 1;
+
+    const updateCarousel = () => {
+      track.style.transform = `translateX(-${currentIndex * 100}%)`;
+    };
+
+    nextBtn.addEventListener('click', () => {
+      currentIndex = currentIndex < maxIndex ? currentIndex + 1 : 0;
+      updateCarousel();
+    });
+
+    prevBtn.addEventListener('click', () => {
+      currentIndex = currentIndex > 0 ? currentIndex - 1 : maxIndex;
+      updateCarousel();
+    });
+  }
+</script>
+
+<style>
+  .carousel-section {
+    padding: 2rem 0;
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding-left: var(--section-px);
+    padding-right: var(--section-px);
+  }
+
+  .carousel-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+  }
+
+  .carousel-track {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+  }
+
+  .carousel-slide {
+    min-width: 100%;
+    position: relative;
+  }
+
+  .img-wrapper {
+    position: relative;
+    aspect-ratio: 21/9;
+    overflow: hidden;
+  }
+
+  @media (max-width: 768px) {
+    .img-wrapper {
+      aspect-ratio: 16/9;
+    }
+  }
+
+  .img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s ease;
+  }
+
+  .group:hover .img-wrapper img {
+    transform: scale(1.05);
+  }
+
+  .placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: var(--gray-light);
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0) 100%);
+  }
+
+  .slide-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 3rem 2rem 2rem;
+    color: var(--white);
+  }
+
+  .slide-title {
+    font-family: var(--font-serif);
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    margin: 1rem 0 0.5rem;
+    line-height: 1.2;
+    transition: color 0.2s ease;
+  }
+
+  .group:hover .slide-title {
+    color: var(--orange);
+  }
+
+  .slide-excerpt {
+    font-size: var(--text-small);
+    opacity: 0.9;
+    max-width: 600px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .carousel-controls {
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .nav-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+
+  .nav-btn:hover {
+    background-color: var(--orange);
+    border-color: var(--orange);
+  }
+</style>

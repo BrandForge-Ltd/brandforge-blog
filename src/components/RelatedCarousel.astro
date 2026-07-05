@@ -1,0 +1,117 @@
+---
+import BlogCard from './BlogCard.astro';
+
+export interface Props {
+  posts: any[];
+}
+
+const { posts } = Astro.props;
+---
+
+<div class="related-carousel-wrapper">
+  <div class="related-carousel-track" id="relatedCarouselTrack">
+    {posts.map((post: any) => (
+      <div class="related-carousel-item">
+        <BlogCard post={post} />
+      </div>
+    ))}
+  </div>
+  
+  {posts.length > 2 && (
+    <div class="related-carousel-controls">
+      <button id="relatedPrevBtn" class="nav-btn" aria-label="Previous posts">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <button id="relatedNextBtn" class="nav-btn" aria-label="Next posts">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
+  )}
+</div>
+
+<script>
+  const track = document.getElementById('relatedCarouselTrack');
+  const prevBtn = document.getElementById('relatedPrevBtn');
+  const nextBtn = document.getElementById('relatedNextBtn');
+  
+  if (track && prevBtn && nextBtn) {
+    prevBtn.addEventListener('click', () => {
+      const itemWidth = (track.firstElementChild as HTMLElement)?.offsetWidth || 0;
+      const gap = parseInt(window.getComputedStyle(track).gap) || 0;
+      track.scrollBy({ left: -(itemWidth + gap), behavior: 'smooth' });
+    });
+
+    nextBtn.addEventListener('click', () => {
+      const itemWidth = (track.firstElementChild as HTMLElement)?.offsetWidth || 0;
+      const gap = parseInt(window.getComputedStyle(track).gap) || 0;
+      track.scrollBy({ left: itemWidth + gap, behavior: 'smooth' });
+    });
+  }
+</script>
+
+<style>
+  .related-carousel-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  .related-carousel-track {
+    display: flex;
+    gap: 2rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 1.5rem;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+  }
+
+  .related-carousel-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .related-carousel-item {
+    flex: 0 0 calc(100% - 2rem);
+    scroll-snap-align: start;
+    min-width: 0; /* Important for flex items */
+  }
+
+  @media (min-width: 768px) {
+    .related-carousel-item {
+      flex: 0 0 calc(50% - 1rem);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .related-carousel-item {
+      flex: 0 0 calc(33.333% - 1.333rem);
+    }
+  }
+
+  .related-carousel-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .nav-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--white);
+    border: 1px solid var(--border);
+    color: var(--charcoal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  }
+
+  .nav-btn:hover {
+    background-color: var(--orange);
+    color: var(--white);
+    border-color: var(--orange);
+  }
+</style>
