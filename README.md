@@ -1,43 +1,66 @@
-# Astro Starter Kit: Minimal
+# BrandForge Blog
 
-```sh
-npm create astro@latest -- --template minimal
-```
+This repository contains the source code for the BrandForge Blog, built to align perfectly with the BrandForge aesthetic and design system.
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## 🚀 Tech Stack
 
-## 🚀 Project Structure
+- **Framework**: [Astro](https://astro.build/) - For fast, static site generation.
+- **CMS**: [Sanity.io](https://sanity.io/) - Headless CMS used for managing blog posts, categories, and authors.
+- **Styling**: Vanilla CSS utilizing CSS variables for a maintainable design system.
+- **Typography**: `Syne` (Display) and `Inter` (Sans-serif) to match the main brandforgeinc.com website.
+- **Deployment**: Cloudflare Pages.
 
-Inside of your Astro project, you'll see the following folders and files:
+## 📁 Project Structure
 
 ```text
 /
-├── public/
+├── public/                 # Static assets (images, icons)
 ├── src/
-│   └── pages/
-│       └── index.astro
+│   ├── components/         # Reusable UI components (Header, Footer, HeroSlider, etc.)
+│   ├── layouts/            # Page wrappers (Layout.astro)
+│   ├── lib/                # Utilities and Sanity client config (sanity.ts, queries.ts)
+│   ├── pages/              # Astro routes (index.astro, blog/[slug].astro)
+│   └── styles/             # Global CSS variables and design tokens (globals.css)
 └── package.json
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## 🛠️ Local Development
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+### 1. Install Dependencies
 
-Any static assets, like images, can be placed in the `public/` directory.
+```sh
+npm install
+```
 
-## 🧞 Commands
+### 2. Environment Variables
 
-All commands are run from the root of the project, from a terminal:
+Ensure your Sanity credentials are set up. Create a `.env` file in the root directory (if not already present). The project ID and dataset are publicly accessible, but required to fetch content:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+```env
+PUBLIC_SANITY_PROJECT_ID="dij92dms"
+PUBLIC_SANITY_DATASET="production"
+```
 
-## 👀 Want to learn more?
+*(Note: Replace with your actual project ID if different)*
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+### 3. Start the Development Server
+
+To run the site locally:
+
+```sh
+npm run dev
+```
+
+The site will be available at `http://localhost:4321`.
+
+## 📦 Building & Deployment
+
+To build a production version of the site:
+
+```sh
+npm run build
+```
+
+This will generate a static build in the `./dist/` folder.
+
+**Deployment**: The site is set up for continuous deployment on **Cloudflare Pages**. Pushing to the `main` branch of the GitHub repository (`BrandForge-Ltd/brandforge-blog`) will automatically trigger a build and deployment.
