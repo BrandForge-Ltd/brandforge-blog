@@ -46,7 +46,6 @@ export default function ReactBlogCard({ post }: { post: Post }) {
           <span className="reading-time" style={{ fontSize: '0.75rem', color: 'var(--gray)', fontWeight: 500 }}>{readingTime} min read</span>
         </div>
         <h3 className="title">{post.title}</h3>
-        <p className="excerpt">{post.excerpt}</p>
         <div className="read-more">
           Read Article 
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

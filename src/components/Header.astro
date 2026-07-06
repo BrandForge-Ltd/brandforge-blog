@@ -11,6 +11,11 @@ const categories = await client.fetch(categoriesQuery);
         <img src="/brandforge-logo.png" alt="BrandForge Logo" style="height: 32px;" />
         <span class="logo-text">BLOG</span>
       </a>
+      
+      <button class="mobile-menu-btn" aria-label="Toggle menu" aria-expanded="false">
+        <span class="hamburger"></span>
+      </button>
+
       <div class="nav-links">
         <a href="/" class="nav-link">Home</a>
         
@@ -29,6 +34,32 @@ const categories = await client.fetch(categoriesQuery);
     </nav>
   </div>
 </header>
+
+<script>
+  const mobileBtn = document.querySelector('.mobile-menu-btn');
+  const navLinks = document.querySelector('.nav-links');
+  const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+
+  if (mobileBtn && navLinks) {
+    mobileBtn.addEventListener('click', () => {
+      const isExpanded = mobileBtn.getAttribute('aria-expanded') === 'true';
+      mobileBtn.setAttribute('aria-expanded', (!isExpanded).toString());
+      navLinks.classList.toggle('active');
+      mobileBtn.classList.toggle('active');
+    });
+  }
+
+  // Handle mobile dropdowns
+  dropdownToggles.forEach(toggle => {
+    toggle.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768) {
+        e.preventDefault();
+        const dropdown = toggle.closest('.dropdown');
+        dropdown?.classList.toggle('mobile-active');
+      }
+    });
+  });
+</script>
 
 <style>
   .header {
@@ -61,6 +92,57 @@ const categories = await client.fetch(categoriesQuery);
     transform: translateY(2px);
   }
 
+  .mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    z-index: 101;
+  }
+
+  .hamburger {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background-color: var(--ink);
+    position: relative;
+    transition: background-color 0.2s ease;
+  }
+
+  .hamburger::before,
+  .hamburger::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 2px;
+    background-color: var(--ink);
+    left: 0;
+    transition: transform 0.2s ease, top 0.2s ease;
+  }
+
+  .hamburger::before {
+    top: -6px;
+  }
+
+  .hamburger::after {
+    top: 6px;
+  }
+
+  .mobile-menu-btn.active .hamburger {
+    background-color: transparent;
+  }
+
+  .mobile-menu-btn.active .hamburger::before {
+    top: 0;
+    transform: rotate(45deg);
+  }
+
+  .mobile-menu-btn.active .hamburger::after {
+    top: 0;
+    transform: rotate(-45deg);
+  }
+
   .nav-links {
     display: flex;
     gap: 2rem;
@@ -81,6 +163,7 @@ const categories = await client.fetch(categoriesQuery);
     background: none;
     border: none;
     cursor: pointer;
+    text-decoration: none;
   }
 
   .nav-link:hover {
@@ -122,7 +205,8 @@ const categories = await client.fetch(categoriesQuery);
     flex-direction: column;
   }
 
-  .dropdown:hover .dropdown-menu {
+  .dropdown:hover .dropdown-menu,
+  .dropdown.mobile-active .dropdown-menu {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
@@ -134,10 +218,66 @@ const categories = await client.fetch(categoriesQuery);
     font-size: 0.875rem;
     border-radius: 0.25rem;
     transition: background-color 0.2s ease, color 0.2s ease;
+    text-decoration: none;
   }
 
   .dropdown-item:hover {
     background-color: var(--off-white);
     color: var(--orange);
+  }
+
+  @media (max-width: 768px) {
+    .mobile-menu-btn {
+      display: block;
+    }
+
+    .nav-links {
+      position: fixed;
+      top: 80px;
+      left: 0;
+      right: 0;
+      background-color: var(--white);
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 2rem var(--section-px);
+      gap: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+      transform: translateY(-100%);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 99;
+    }
+
+    .nav-links.active {
+      transform: translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .dropdown {
+      width: 100%;
+    }
+
+    .dropdown-menu {
+      position: static;
+      box-shadow: none;
+      border: none;
+      padding: 0.5rem 0 0 1rem;
+      opacity: 0;
+      visibility: hidden;
+      height: 0;
+      overflow: hidden;
+      transform: none;
+      transition: none;
+    }
+
+    .dropdown.mobile-active .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      height: auto;
+      margin-top: 0.5rem;
+    }
   }
 </style>

@@ -13,10 +13,9 @@
   },
   "dependencies": {
     "@astrojs/react": "^6.0.1",
-    "@fontsource/bricolage-grotesque": "^5.2.10",
     "@fontsource/inter": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
-    "@fontsource/playfair-display": "^5.2.8",
+    "@fontsource/syne": "^5.2.7",
     "@portabletext/react": "^6.2.0",
     "@sanity/client": "^7.23.0",
     "@sanity/image-url": "^2.1.1",

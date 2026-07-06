@@ -1,20 +1,18 @@
-@import '@fontsource/bricolage-grotesque/400.css';
-@import '@fontsource/bricolage-grotesque/700.css';
-@import '@fontsource/bricolage-grotesque/800.css';
+@import '@fontsource/syne/400.css';
+@import '@fontsource/syne/600.css';
+@import '@fontsource/syne/700.css';
+@import '@fontsource/syne/800.css';
 @import '@fontsource/inter/400.css';
 @import '@fontsource/inter/500.css';
 @import '@fontsource/inter/600.css';
-@import '@fontsource/playfair-display/400.css';
-@import '@fontsource/playfair-display/700.css';
-@import '@fontsource/playfair-display/400-italic.css';
 @import '@fontsource/jetbrains-mono/400.css';
 
 :root {
   /* Fonts */
-  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-display: 'Syne', sans-serif;
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --font-serif: 'Playfair Display', serif;
+  --font-serif: 'Syne', sans-serif;
 
   /* Colors */
   --white: #FFFFFF;

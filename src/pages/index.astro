@@ -1,24 +1,29 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import PostFeed from '../components/PostFeed';
-import Carousel from '../components/Carousel.astro';
+import HeroSlider from '../components/HeroSlider';
+import RecommendedBriefs from '../components/RecommendedBriefs';
 import Sidebar from '../components/Sidebar.astro';
 import { client } from '../lib/sanity';
 import { postsQuery } from '../lib/queries';
 
 // Fetch initial posts during build
-const posts = await client.fetch(postsQuery, { start: 0, end: 12 });
+const posts = await client.fetch(postsQuery, { start: 0, end: 20 });
+const heroPosts = posts.slice(0, 5);
+const feedPosts = posts.slice(5, 17);
 ---
 
 <Layout title="Blog" description="BrandForge Blog - Insights & Updates">
-  <Carousel />
-
-  <section class="posts-section section-py">
+  <section class="section-py" style="padding-top: 2rem;">
     <div class="container">
+      <HeroSlider client:load posts={heroPosts} />
+      
+      <RecommendedBriefs client:only="react" posts={posts} />
+
       <div class="blog-layout">
         <main class="main-content">
-          <h2 class="section-title">All Posts</h2>
-          <PostFeed client:load initialPosts={posts} />
+          <h2 class="section-title">Top Stories</h2>
+          <PostFeed client:load initialPosts={feedPosts} />
         </main>
         
         <aside class="sidebar-wrapper">
