@@ -59,13 +59,43 @@ const { textToRead } = Astro.props;
     const text = textContainer.textContent || '';
     let utterance = new SpeechSynthesisUtterance(text);
     
-    // Set a good voice if available
-    window.speechSynthesis.onvoiceschanged = () => {
+    // Improve voice naturalness
+    utterance.rate = 0.95; // Slightly slower
+    utterance.pitch = 1.05; // Slightly higher pitch for clarity
+    
+    const setBestVoice = (u: SpeechSynthesisUtterance) => {
       const voices = window.speechSynthesis.getVoices();
-      const preferredVoice = voices.find(v => v.name.includes('Google') || v.name.includes('Samantha') || v.lang === 'en-US');
-      if (preferredVoice) {
-        utterance.voice = preferredVoice;
+      if (!voices.length) return;
+      
+      // Look for known premium/natural voices across OS
+      const preferredNames = [
+        'Google US English', 'Samantha', 'Karen', 'Tessa', 'Moira', 'Daniel', 
+        'Microsoft Aria Online', 'Microsoft Guy Online', 'Microsoft Jenny Online'
+      ];
+      
+      let bestVoice = null;
+      for (const name of preferredNames) {
+        bestVoice = voices.find(v => v.name.includes(name));
+        if (bestVoice) break;
       }
+      
+      // Fallback: look for "Premium" or "Enhanced" english voices
+      if (!bestVoice) {
+        bestVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Premium') || v.name.includes('Enhanced')));
+      }
+      
+      // Fallback: any English female voice, or just the first english voice
+      if (!bestVoice) {
+        bestVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Female')) || voices.find(v => v.lang.startsWith('en'));
+      }
+      
+      if (bestVoice) {
+        u.voice = bestVoice;
+      }
+    };
+
+    window.speechSynthesis.onvoiceschanged = () => {
+      setBestVoice(utterance);
     };
 
     utterance.onend = () => {
@@ -112,11 +142,9 @@ const { textToRead } = Astro.props;
         window.speechSynthesis.cancel(); // Cancel any ongoing speech
         // Re-create utterance in case it was modified
         utterance = new SpeechSynthesisUtterance(textContainer.textContent || '');
-        const voices = window.speechSynthesis.getVoices();
-        const preferredVoice = voices.find(v => v.name.includes('Google') || v.name.includes('Samantha') || v.lang === 'en-US');
-        if (preferredVoice) {
-          utterance.voice = preferredVoice;
-        }
+        utterance.rate = 0.95;
+        utterance.pitch = 1.05;
+        setBestVoice(utterance);
         
         utterance.onend = resetUI;
         utterance.onerror = resetUI;

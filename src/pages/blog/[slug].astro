@@ -8,6 +8,7 @@ import ShareButtons from '../../components/ShareButtons.astro';
 import RelatedCarousel from '../../components/RelatedCarousel.astro';
 import Sidebar from '../../components/Sidebar.astro';
 import MobileTOC from '../../components/MobileTOC.astro';
+import A11yControls from '../../components/A11yControls.astro';
 
 export async function getStaticPaths() {
   const query = `*[_type == "post" && defined(slug.current)][]{ "slug": slug.current }`;
@@ -144,8 +145,9 @@ if (post.body) {
     <div class="post-layout container">
       <!-- Left Sidebar (Share) -->
       <aside class="post-share-sidebar">
-        <div class="sticky-share">
+        <div class="sticky-share" style="display: flex; flex-direction: column; gap: 2rem; align-items: center;">
           <ShareButtons url={currentUrl} title={post.title} layout="vertical" />
+          <A11yControls layout="vertical" />
         </div>
       </aside>
 
@@ -164,10 +166,13 @@ if (post.body) {
           </button>
           
           <AudioPlayer textToRead={plainTextBody} />
+          <div class="a11y-wrapper" style="display: flex; justify-content: flex-end; margin-top: -1rem;">
+            <A11yControls />
+          </div>
         </div>
 
         <div class="prose">
-          <PortableTextWithTOC value={post.body} />
+          <PortableTextWithTOC value={post.body} currentUrl={currentUrl} />
         </div>
 
         <!-- Footer mobile share -->
@@ -265,6 +270,67 @@ if (post.body) {
           summaryContent.classList.add('expanded');
           toggleBtn.innerHTML = `See less <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron" style="transform: rotate(180deg);"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
         }
+      });
+    }
+
+    // Highlight to Share
+    const prose = document.querySelector('.prose');
+    let shareTooltip = document.getElementById('highlight-share-tooltip');
+    
+    if (prose && !shareTooltip) {
+      shareTooltip = document.createElement('div');
+      shareTooltip.id = 'highlight-share-tooltip';
+      shareTooltip.className = 'highlight-share-tooltip';
+      shareTooltip.innerHTML = `
+        <button id="hs-twitter" aria-label="Share on X (Twitter)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </button>
+        <button id="hs-linkedin" aria-label="Share on LinkedIn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+        </button>
+      `;
+      document.body.appendChild(shareTooltip);
+
+      const twBtn = document.getElementById('hs-twitter');
+      const liBtn = document.getElementById('hs-linkedin');
+      
+      let selectedText = '';
+
+      document.addEventListener('selectionchange', () => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+          shareTooltip.classList.remove('show');
+          return;
+        }
+
+        if (!prose.contains(selection.anchorNode)) {
+          shareTooltip.classList.remove('show');
+          return;
+        }
+
+        selectedText = selection.toString().trim();
+        if (selectedText.length < 5) {
+          shareTooltip.classList.remove('show');
+          return;
+        }
+
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        
+        shareTooltip.style.top = `${rect.top + window.scrollY - 40}px`;
+        shareTooltip.style.left = `${rect.left + (rect.width / 2)}px`;
+        shareTooltip.classList.add('show');
+      });
+
+      const currentUrl = encodeURIComponent(window.location.href);
+
+      twBtn?.addEventListener('click', () => {
+        const text = encodeURIComponent(`"${selectedText}"`);
+        window.open(`https://twitter.com/intent/tweet?url=${currentUrl}&text=${text}`, '_blank');
+      });
+
+      liBtn?.addEventListener('click', () => {
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${currentUrl}`, '_blank');
       });
     }
   </script>
@@ -579,6 +645,56 @@ if (post.body) {
     border-radius: 1rem;
     margin: 3rem 0;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Highlight Share Tooltip */
+  :global(.highlight-share-tooltip) {
+    position: absolute;
+    transform: translateX(-50%) translateY(10px);
+    background-color: var(--ink);
+    border-radius: 8px;
+    padding: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 1000;
+  }
+
+  :global(.highlight-share-tooltip::after) {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px 6px 0;
+    border-style: solid;
+    border-color: var(--ink) transparent transparent transparent;
+  }
+
+  :global(.highlight-share-tooltip.show) {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  :global(.highlight-share-tooltip button) {
+    background: none;
+    border: none;
+    color: var(--white);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    transition: color 0.2s ease;
+  }
+
+  :global(.highlight-share-tooltip button:hover) {
+    color: var(--orange);
   }
 
   /* Mobile share footer */

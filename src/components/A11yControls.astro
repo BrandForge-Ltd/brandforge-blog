@@ -1,0 +1,197 @@
+---
+export interface Props {
+  layout?: 'horizontal' | 'vertical';
+}
+
+const { layout = 'horizontal' } = Astro.props;
+---
+
+<div class={`a11y-controls ${layout === 'vertical' ? 'layout-vertical' : ''}`} aria-label="Accessibility Controls">
+  <button data-a11y-action="decrease" class="a11y-btn" title="Decrease font size" aria-label="Decrease font size">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13.4a2 2 0 0 1 2 2v14"></path><path d="M8 11h8"></path></svg>
+    <span class="btn-label">A-</span>
+  </button>
+  <button data-a11y-action="increase" class="a11y-btn" title="Increase font size" aria-label="Increase font size">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13.4a2 2 0 0 1 2 2v14"></path><path d="M8 11h8"></path><path d="M12 7v8"></path></svg>
+    <span class="btn-label">A+</span>
+  </button>
+  <button data-a11y-action="contrast" class="a11y-btn" title="Toggle high contrast" aria-label="Toggle high contrast">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 0 0 20z" fill="currentColor"></path></svg>
+  </button>
+  <button data-a11y-action="dyslexic" class="a11y-btn" title="Toggle dyslexia-friendly font" aria-label="Toggle dyslexia-friendly font">
+    <span style="font-weight: 700; font-family: serif; letter-spacing: 1px;">b d</span>
+  </button>
+</div>
+
+<script>
+  // Accessibility State Management
+  const state = {
+    textSize: 100, // percentage
+    contrast: false,
+    dyslexic: false
+  };
+
+  const loadState = () => {
+    const saved = localStorage.getItem('brandforge_a11y');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        state.textSize = parsed.textSize || 100;
+        state.contrast = !!parsed.contrast;
+        state.dyslexic = !!parsed.dyslexic;
+      } catch (e) {}
+    }
+  };
+
+  const saveState = () => {
+    localStorage.setItem('brandforge_a11y', JSON.stringify(state));
+  };
+
+  const updateButtons = (actionName: string, isActive: boolean) => {
+    document.querySelectorAll(`button[data-a11y-action="${actionName}"]`).forEach(btn => {
+      if (isActive) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+  };
+
+  const applyState = () => {
+    // Apply Text Size
+    document.documentElement.style.fontSize = `${16 * (state.textSize / 100)}px`;
+    
+    // Apply Contrast
+    if (state.contrast) {
+      document.body.classList.add('a11y-high-contrast');
+      updateButtons('contrast', true);
+    } else {
+      document.body.classList.remove('a11y-high-contrast');
+      updateButtons('contrast', false);
+    }
+
+    // Apply Dyslexic Font
+    if (state.dyslexic) {
+      document.body.classList.add('a11y-dyslexic-font');
+      updateButtons('dyslexic', true);
+    } else {
+      document.body.classList.remove('a11y-dyslexic-font');
+      updateButtons('dyslexic', false);
+    }
+  };
+
+  // Initialize
+  loadState();
+  applyState();
+
+  // Event Listeners for all instances
+  document.querySelectorAll('button[data-a11y-action="decrease"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.textSize = Math.max(80, state.textSize - 10);
+      saveState();
+      applyState();
+    });
+  });
+
+  document.querySelectorAll('button[data-a11y-action="increase"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.textSize = Math.min(150, state.textSize + 10);
+      saveState();
+      applyState();
+    });
+  });
+
+  document.querySelectorAll('button[data-a11y-action="contrast"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.contrast = !state.contrast;
+      saveState();
+      applyState();
+    });
+  });
+
+  document.querySelectorAll('button[data-a11y-action="dyslexic"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.dyslexic = !state.dyslexic;
+      saveState();
+      applyState();
+    });
+  });
+</script>
+
+<style is:global>
+  /* Global Accessibility Overrides */
+  body.a11y-high-contrast {
+    --off-white: #ffffff;
+    --ink: #000000;
+    --charcoal: #000000;
+    --gray: #333333;
+    --orange: #cc4400; /* Darker orange for better contrast */
+    background-color: var(--white) !important;
+    color: var(--ink) !important;
+  }
+  
+  body.a11y-high-contrast .summary-box {
+    background-color: var(--white);
+    border: 2px solid var(--ink);
+  }
+
+  /* We use a web-safe readable font for the dyslexic toggle if a specific one isn't imported, 
+     Comic Sans / Trebuchet are actually known to be quite readable for dyslexia */
+  body.a11y-dyslexic-font {
+    --font-sans: 'Comic Sans MS', 'Trebuchet MS', sans-serif !important;
+    --font-serif: 'Comic Sans MS', 'Trebuchet MS', sans-serif !important;
+    letter-spacing: 0.05em;
+    word-spacing: 0.1em;
+    line-height: 1.8 !important;
+  }
+</style>
+
+<style>
+  .a11y-controls {
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    padding: 0.25rem;
+    gap: 0.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .a11y-controls.layout-vertical {
+    flex-direction: column;
+  }
+
+  .a11y-controls.layout-vertical .btn-label {
+    display: none;
+  }
+
+  .a11y-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.75rem;
+    background: transparent;
+    border: none;
+    border-radius: 9999px;
+    color: var(--gray);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .a11y-controls.layout-vertical .a11y-btn {
+    padding: 0.5rem;
+    border-radius: 50%;
+  }
+
+  .a11y-btn:hover {
+    background-color: var(--off-white);
+    color: var(--ink);
+  }
+
+  .a11y-btn.active {
+    background-color: var(--ink);
+    color: var(--white);
+  }
+</style>

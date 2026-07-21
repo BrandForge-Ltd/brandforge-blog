@@ -1,4 +1,6 @@
 ---
+import A11yControls from './A11yControls.astro';
+
 export interface Props {
   tocHeadings: { id: string; text: string; level: number }[];
 }
@@ -6,32 +8,36 @@ export interface Props {
 const { tocHeadings = [] } = Astro.props;
 ---
 
-{tocHeadings.length > 0 && (
-  <div class="mobile-toc-wrapper">
-    <!-- Floating Action Button -->
-    <button id="mobileTocBtn" class="mobile-toc-fab" aria-label="Table of Contents">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="8" y1="6" x2="21" y2="6"></line>
-        <line x1="8" y1="12" x2="21" y2="12"></line>
-        <line x1="8" y1="18" x2="21" y2="18"></line>
-        <line x1="3" y1="6" x2="3.01" y2="6"></line>
-        <line x1="3" y1="12" x2="3.01" y2="12"></line>
-        <line x1="3" y1="18" x2="3.01" y2="18"></line>
-      </svg>
-    </button>
+<div class="mobile-toc-wrapper">
+  <!-- Floating Action Button -->
+  <button id="mobileTocBtn" class="mobile-toc-fab" aria-label="Options & Navigation">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="8" y1="6" x2="21" y2="6"></line>
+      <line x1="8" y1="12" x2="21" y2="12"></line>
+      <line x1="8" y1="18" x2="21" y2="18"></line>
+      <line x1="3" y1="6" x2="3.01" y2="6"></line>
+      <line x1="3" y1="12" x2="3.01" y2="12"></line>
+      <line x1="3" y1="18" x2="3.01" y2="18"></line>
+    </svg>
+  </button>
 
-    <!-- Bottom Sheet -->
-    <div id="mobileTocSheet" class="mobile-toc-sheet">
-      <div class="sheet-header">
-        <h3>Table of Contents</h3>
-        <button id="closeTocBtn" class="close-sheet-btn" aria-label="Close">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
+  <!-- Bottom Sheet (Always rendered to show A11yControls) -->
+  <div id="mobileTocSheet" class="mobile-toc-sheet">
+    <div class="sheet-header">
+      <h3>Options & Navigation</h3>
+      <button id="closeTocBtn" class="close-sheet-btn" aria-label="Close">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="sheet-content">
+      <div style="margin-bottom: 2rem; display: flex; justify-content: center;">
+        <A11yControls />
       </div>
-      <div class="sheet-content">
+      
+      {tocHeadings.length > 0 && (
         <ul class="mobile-toc-list">
           {tocHeadings.map((heading: any) => (
             <li class={`mobile-toc-item level-${heading.level}`}>
@@ -39,13 +45,13 @@ const { tocHeadings = [] } = Astro.props;
             </li>
           ))}
         </ul>
-      </div>
+      )}
     </div>
-
-    <!-- Backdrop -->
-    <div id="mobileTocBackdrop" class="mobile-toc-backdrop"></div>
   </div>
-)}
+
+  <!-- Backdrop -->
+  <div id="mobileTocBackdrop" class="mobile-toc-backdrop"></div>
+</div>
 
 <script>
   const tocBtn = document.getElementById('mobileTocBtn');
