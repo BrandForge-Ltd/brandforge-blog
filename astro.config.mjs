@@ -3,6 +3,8 @@ import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import sanity from '@sanity/astro';
 
+import cloudflare from '@astrojs/cloudflare';
+
 // https://astro.build/config
 export default defineConfig({
   integrations: [
@@ -14,5 +16,7 @@ export default defineConfig({
       apiVersion: '2024-01-01',
       studioBasePath: '/studio',
     }),
-  ]
+  ],
+
+  adapter: cloudflare()
 });

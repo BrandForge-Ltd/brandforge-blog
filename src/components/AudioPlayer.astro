@@ -36,6 +36,12 @@ const { textToRead } = Astro.props;
   </div>
 
   <div class="player-actions">
+    <select id="voiceSelector" class="voice-selector" aria-label="Select voice">
+      <option value="@cf/deepgram/aura-asteria-en">Asteria (Female)</option>
+      <option value="@cf/deepgram/aura-orion-en">Orion (Male)</option>
+      <option value="@cf/deepgram/aura-luna-en">Luna (Female)</option>
+      <option value="@cf/myshell-ai/melotts">MeloTTS</option>
+    </select>
     <span class="status-text" id="statusText">Ready</span>
     <button id="stopBtn" class="stop-btn hidden" aria-label="Stop reading" title="Stop">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect></svg>
@@ -54,125 +60,141 @@ const { textToRead } = Astro.props;
   const statusText = document.getElementById('statusText');
   const waveform = document.getElementById('waveform');
   const playerContainer = document.getElementById('audioPlayerContainer');
+  const voiceSelector = document.getElementById('voiceSelector') as HTMLSelectElement;
+  
+  let audioEl: HTMLAudioElement | null = null;
+  let isGenerating = false;
 
-  if ('speechSynthesis' in window && playBtn && pauseBtn && stopBtn && textContainer && statusText && waveform && playerContainer) {
-    const text = textContainer.textContent || '';
-    let utterance = new SpeechSynthesisUtterance(text);
-    
-    // Improve voice naturalness
-    utterance.rate = 0.95; // Slightly slower
-    utterance.pitch = 1.05; // Slightly higher pitch for clarity
-    
-    const setBestVoice = (u: SpeechSynthesisUtterance) => {
-      const voices = window.speechSynthesis.getVoices();
-      if (!voices.length) return;
-      
-      // Look for known premium/natural voices across OS
-      const preferredNames = [
-        'Google US English', 'Samantha', 'Karen', 'Tessa', 'Moira', 'Daniel', 
-        'Microsoft Aria Online', 'Microsoft Guy Online', 'Microsoft Jenny Online'
-      ];
-      
-      let bestVoice = null;
-      for (const name of preferredNames) {
-        bestVoice = voices.find(v => v.name.includes(name));
-        if (bestVoice) break;
-      }
-      
-      // Fallback: look for "Premium" or "Enhanced" english voices
-      if (!bestVoice) {
-        bestVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Premium') || v.name.includes('Enhanced')));
-      }
-      
-      // Fallback: any English female voice, or just the first english voice
-      if (!bestVoice) {
-        bestVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Female')) || voices.find(v => v.lang.startsWith('en'));
-      }
-      
-      if (bestVoice) {
-        u.voice = bestVoice;
-      }
-    };
+  const updateUIState = (state: 'generating' | 'playing' | 'paused' | 'ready' | 'error') => {
+    if (!playBtn || !pauseBtn || !stopBtn || !statusText || !waveform || !playerContainer) return;
 
-    window.speechSynthesis.onvoiceschanged = () => {
-      setBestVoice(utterance);
-    };
-
-    utterance.onend = () => {
-      resetUI();
-    };
-
-    utterance.onerror = () => {
-      resetUI();
-    };
-
-    const updateUIState = (state: 'playing' | 'paused' | 'stopped') => {
-      if (state === 'playing') {
-        playBtn.classList.add('hidden');
-        pauseBtn.classList.remove('hidden');
-        stopBtn.classList.remove('hidden');
-        statusText.textContent = 'Playing';
-        waveform.classList.add('active');
-        playerContainer.classList.add('is-playing');
-      } else if (state === 'paused') {
-        playBtn.classList.remove('hidden');
-        pauseBtn.classList.add('hidden');
-        stopBtn.classList.remove('hidden');
-        statusText.textContent = 'Paused';
-        waveform.classList.remove('active');
-        playerContainer.classList.remove('is-playing');
-      } else {
-        resetUI();
-      }
-    };
-
-    const resetUI = () => {
+    if (state === 'generating') {
+      playBtn.classList.add('hidden');
+      pauseBtn.classList.add('hidden');
+      stopBtn.classList.remove('hidden');
+      statusText.textContent = 'Generating...';
+      waveform.classList.add('active');
+      playerContainer.classList.add('is-playing');
+      if (voiceSelector) voiceSelector.disabled = true;
+    } else if (state === 'playing') {
+      playBtn.classList.add('hidden');
+      pauseBtn.classList.remove('hidden');
+      stopBtn.classList.remove('hidden');
+      statusText.textContent = 'Playing';
+      waveform.classList.add('active');
+      playerContainer.classList.add('is-playing');
+      if (voiceSelector) voiceSelector.disabled = true;
+    } else if (state === 'paused') {
+      playBtn.classList.remove('hidden');
+      pauseBtn.classList.add('hidden');
+      stopBtn.classList.remove('hidden');
+      statusText.textContent = 'Paused';
+      waveform.classList.remove('active');
+      playerContainer.classList.remove('is-playing');
+      if (voiceSelector) voiceSelector.disabled = false;
+    } else if (state === 'error') {
+      playBtn.classList.remove('hidden');
+      pauseBtn.classList.add('hidden');
+      stopBtn.classList.add('hidden');
+      statusText.textContent = 'Error';
+      waveform.classList.remove('active');
+      playerContainer.classList.remove('is-playing');
+      isGenerating = false;
+      if (voiceSelector) voiceSelector.disabled = false;
+    } else {
       playBtn.classList.remove('hidden');
       pauseBtn.classList.add('hidden');
       stopBtn.classList.add('hidden');
       statusText.textContent = 'Ready';
       waveform.classList.remove('active');
       playerContainer.classList.remove('is-playing');
-    };
+      isGenerating = false;
+      if (voiceSelector) voiceSelector.disabled = false;
+    }
+  };
 
-    playBtn.addEventListener('click', () => {
-      if (window.speechSynthesis.paused) {
-        window.speechSynthesis.resume();
-      } else {
-        window.speechSynthesis.cancel(); // Cancel any ongoing speech
-        // Re-create utterance in case it was modified
-        utterance = new SpeechSynthesisUtterance(textContainer.textContent || '');
-        utterance.rate = 0.95;
-        utterance.pitch = 1.05;
-        setBestVoice(utterance);
-        
-        utterance.onend = resetUI;
-        utterance.onerror = resetUI;
-        window.speechSynthesis.speak(utterance);
+  const generateAndPlay = async () => {
+    if (isGenerating || !textContainer) return;
+    isGenerating = true;
+    updateUIState('generating');
+    
+    try {
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: textContainer.textContent,
+          voice: voiceSelector ? voiceSelector.value : undefined
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate audio');
       }
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      if (audioEl) {
+        audioEl.pause();
+        audioEl.src = '';
+      }
+      
+      audioEl = new Audio(url);
+      
+      audioEl.onended = () => updateUIState('ready');
+      audioEl.onerror = () => updateUIState('error');
+      
+      await audioEl.play();
       updateUIState('playing');
+    } catch (err) {
+      console.error('Audio playback error:', err);
+      updateUIState('error');
+    }
+  };
+
+  if (playBtn && pauseBtn && stopBtn) {
+    playBtn.addEventListener('click', () => {
+      if (audioEl) {
+        if (audioEl.paused) {
+          audioEl.play().then(() => updateUIState('playing')).catch(() => updateUIState('error'));
+        }
+      } else {
+        generateAndPlay();
+      }
     });
 
     pauseBtn.addEventListener('click', () => {
-      window.speechSynthesis.pause();
-      updateUIState('paused');
+      if (audioEl) {
+        audioEl.pause();
+        updateUIState('paused');
+      }
     });
 
     stopBtn.addEventListener('click', () => {
-      window.speechSynthesis.cancel();
-      updateUIState('stopped');
+      if (audioEl) {
+        audioEl.pause();
+        audioEl.currentTime = 0;
+      }
+      updateUIState('ready');
     });
+    
+    if (voiceSelector) {
+      voiceSelector.addEventListener('change', () => {
+        if (audioEl) {
+          audioEl.pause();
+          audioEl = null;
+        }
+        updateUIState('ready');
+      });
+    }
 
     // Cleanup on page hide
     window.addEventListener('pagehide', () => {
-      window.speechSynthesis.cancel();
+      if (audioEl) {
+        audioEl.pause();
+      }
     });
-  } else if (playBtn) {
-    // Browser doesn't support Web Speech API
-    statusText.textContent = 'Not Supported';
-    playBtn.disabled = true;
-    playBtn.style.opacity = '0.5';
-    playBtn.style.cursor = 'not-allowed';
   }
 </script>
 
@@ -349,6 +371,33 @@ const { textToRead } = Astro.props;
     display: none;
   }
 
+  .voice-selector {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--white);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .voice-selector:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .voice-selector:focus {
+    border-color: var(--orange);
+  }
+
+  .voice-selector option {
+    background-color: var(--ink);
+    color: var(--white);
+  }
+
   @media (max-width: 640px) {
     .premium-audio-player {
       padding: 0.75rem;
@@ -366,6 +415,13 @@ const { textToRead } = Astro.props;
     .player-actions {
       border-left: none;
       padding-left: 0;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: flex-end;
+    }
+
+    .voice-selector {
+      max-width: 100px;
     }
   }
 </style>
