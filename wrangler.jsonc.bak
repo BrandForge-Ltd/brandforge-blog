@@ -4,11 +4,6 @@
 	"compatibility_flags": ["global_fetch_strictly_public"],
 	"name": "brandforge-blog",
 	"account_id": "fd61d6fe37de984ffdcc028632216af5",
-	"main": "@astrojs/cloudflare/entrypoints/server",
-	"assets": {
-		"directory": "./dist",
-		"binding": "ASSETS"
-	},
 	"observability": {
 		"enabled": true
 	},

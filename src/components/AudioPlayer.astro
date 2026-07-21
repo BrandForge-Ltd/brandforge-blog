@@ -1,11 +1,6 @@
 ---
-export interface Props {
-  textToRead: string;
-}
-
-const { textToRead } = Astro.props;
+// AudioPlayer Component
 ---
-
 <div class="premium-audio-player" id="audioPlayerContainer">
   <div class="player-cover">
     <div class="disc-icon">
@@ -36,36 +31,99 @@ const { textToRead } = Astro.props;
   </div>
 
   <div class="player-actions">
-    <select id="voiceSelector" class="voice-selector" aria-label="Select voice">
-      <option value="@cf/deepgram/aura-asteria-en">Asteria (Female)</option>
-      <option value="@cf/deepgram/aura-orion-en">Orion (Male)</option>
-      <option value="@cf/deepgram/aura-luna-en">Luna (Female)</option>
-      <option value="@cf/myshell-ai/melotts">MeloTTS</option>
-    </select>
+    <div class="voice-dropdown-container" id="voiceDropdownContainer">
+      <button id="voiceDropdownBtn" class="voice-dropdown-btn">
+        <svg class="voice-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+        <span id="selectedVoiceLabel">Asteria</span>
+        <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+      <div id="voiceDropdownMenu" class="voice-dropdown-menu hidden">
+        <button class="voice-option active" data-voice="asteria">Asteria (Female)</button>
+        <button class="voice-option" data-voice="luna">Luna (Female)</button>
+        <button class="voice-option" data-voice="orion">Orion (Male)</button>
+        <button class="voice-option" data-voice="zeus">Zeus (Male)</button>
+      </div>
+    </div>
+    
     <span class="status-text" id="statusText">Ready</span>
+    
     <button id="stopBtn" class="stop-btn hidden" aria-label="Stop reading" title="Stop">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect></svg>
     </button>
   </div>
-
-  {/* Hidden text container for the script to read */}
-  <div id="textToRead" style="display: none;">{textToRead}</div>
 </div>
 
 <script>
   const playBtn = document.getElementById('playBtn');
   const pauseBtn = document.getElementById('pauseBtn');
   const stopBtn = document.getElementById('stopBtn');
-  const textContainer = document.getElementById('textToRead');
   const statusText = document.getElementById('statusText');
   const waveform = document.getElementById('waveform');
   const playerContainer = document.getElementById('audioPlayerContainer');
-  const voiceSelector = document.getElementById('voiceSelector') as HTMLSelectElement;
   
-  let audioEl: HTMLAudioElement | null = null;
-  let isGenerating = false;
+  // Custom Dropdown logic
+  const voiceDropdownBtn = document.getElementById('voiceDropdownBtn');
+  const voiceDropdownMenu = document.getElementById('voiceDropdownMenu');
+  const voiceOptions = document.querySelectorAll('.voice-option');
+  const selectedVoiceLabel = document.getElementById('selectedVoiceLabel');
+  
+  let selectedVoice = 'asteria';
+  
+  if (voiceDropdownBtn && voiceDropdownMenu) {
+    voiceDropdownBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      voiceDropdownMenu.classList.toggle('hidden');
+    });
+    
+    document.addEventListener('click', () => {
+      voiceDropdownMenu.classList.add('hidden');
+    });
+    
+    voiceOptions.forEach(option => {
+      option.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const target = e.currentTarget;
+        
+        voiceOptions.forEach(opt => opt.classList.remove('active'));
+        target.classList.add('active');
+        selectedVoice = target.getAttribute('data-voice') || 'asteria';
+        
+        if (selectedVoiceLabel) {
+          const text = target.textContent || '';
+          selectedVoiceLabel.textContent = text.split(' (')[0];
+        }
+        
+        voiceDropdownMenu.classList.add('hidden');
+        
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio = null;
+        }
+        updateUIState('ready');
+        resetHighlight();
+        currentElementIndex = 0;
+      });
+    });
+  }
 
-  const updateUIState = (state: 'generating' | 'playing' | 'paused' | 'ready' | 'error') => {
+  let readableElements = [];
+  let currentElementIndex = 0;
+  
+  let currentAudio = null;
+  let nextAudio = null;
+  let isPlaying = false;
+  let isGenerating = false;
+  let isPaused = false;
+
+  const getReadableElements = () => {
+    if (readableElements.length === 0) {
+      readableElements = Array.from(document.querySelectorAll('.prose p, .prose h2, .prose h3, .prose li'))
+        .filter(el => el.textContent.trim().length > 0);
+    }
+    return readableElements;
+  };
+
+  const updateUIState = (state) => {
     if (!playBtn || !pauseBtn || !stopBtn || !statusText || !waveform || !playerContainer) return;
 
     if (state === 'generating') {
@@ -75,7 +133,7 @@ const { textToRead } = Astro.props;
       statusText.textContent = 'Generating...';
       waveform.classList.add('active');
       playerContainer.classList.add('is-playing');
-      if (voiceSelector) voiceSelector.disabled = true;
+      if (voiceDropdownBtn) voiceDropdownBtn.disabled = true;
     } else if (state === 'playing') {
       playBtn.classList.add('hidden');
       pauseBtn.classList.remove('hidden');
@@ -83,7 +141,7 @@ const { textToRead } = Astro.props;
       statusText.textContent = 'Playing';
       waveform.classList.add('active');
       playerContainer.classList.add('is-playing');
-      if (voiceSelector) voiceSelector.disabled = true;
+      if (voiceDropdownBtn) voiceDropdownBtn.disabled = true;
     } else if (state === 'paused') {
       playBtn.classList.remove('hidden');
       pauseBtn.classList.add('hidden');
@@ -91,7 +149,7 @@ const { textToRead } = Astro.props;
       statusText.textContent = 'Paused';
       waveform.classList.remove('active');
       playerContainer.classList.remove('is-playing');
-      if (voiceSelector) voiceSelector.disabled = false;
+      if (voiceDropdownBtn) voiceDropdownBtn.disabled = false;
     } else if (state === 'error') {
       playBtn.classList.remove('hidden');
       pauseBtn.classList.add('hidden');
@@ -100,7 +158,8 @@ const { textToRead } = Astro.props;
       waveform.classList.remove('active');
       playerContainer.classList.remove('is-playing');
       isGenerating = false;
-      if (voiceSelector) voiceSelector.disabled = false;
+      isPlaying = false;
+      if (voiceDropdownBtn) voiceDropdownBtn.disabled = false;
     } else {
       playBtn.classList.remove('hidden');
       pauseBtn.classList.add('hidden');
@@ -109,91 +168,145 @@ const { textToRead } = Astro.props;
       waveform.classList.remove('active');
       playerContainer.classList.remove('is-playing');
       isGenerating = false;
-      if (voiceSelector) voiceSelector.disabled = false;
+      isPlaying = false;
+      if (voiceDropdownBtn) voiceDropdownBtn.disabled = false;
     }
   };
 
-  const generateAndPlay = async () => {
-    if (isGenerating || !textContainer) return;
-    isGenerating = true;
-    updateUIState('generating');
-    
+  const resetHighlight = () => {
+    getReadableElements().forEach(el => el.classList.remove('reading-highlight'));
+  };
+
+  const highlightElement = (index) => {
+    resetHighlight();
+    const elements = getReadableElements();
+    if (index >= 0 && index < elements.length) {
+      const el = elements[index];
+      el.classList.add('reading-highlight');
+      // Scroll into view smoothly
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const fetchAudioForText = async (text) => {
     try {
       const response = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          text: textContainer.textContent,
-          voice: voiceSelector ? voiceSelector.value : undefined
-        })
+        body: JSON.stringify({ text, voice: selectedVoice })
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to generate audio');
-      }
-      
+      if (!response.ok) throw new Error('TTS fetch failed');
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      
-      if (audioEl) {
-        audioEl.pause();
-        audioEl.src = '';
-      }
-      
-      audioEl = new Audio(url);
-      
-      audioEl.onended = () => updateUIState('ready');
-      audioEl.onerror = () => updateUIState('error');
-      
-      await audioEl.play();
-      updateUIState('playing');
+      const audio = new Audio(url);
+      return audio;
     } catch (err) {
-      console.error('Audio playback error:', err);
+      console.error(err);
+      return null;
+    }
+  };
+
+  const prefetchNext = async () => {
+    const elements = getReadableElements();
+    if (currentElementIndex + 1 < elements.length) {
+      const text = elements[currentElementIndex + 1].textContent.trim();
+      nextAudio = await fetchAudioForText(text);
+    } else {
+      nextAudio = null;
+    }
+  };
+
+  const playCurrentChunk = async () => {
+    const elements = getReadableElements();
+    if (currentElementIndex >= elements.length) {
+      resetHighlight();
+      updateUIState('ready');
+      currentElementIndex = 0;
+      return;
+    }
+
+    const text = elements[currentElementIndex].textContent.trim();
+    highlightElement(currentElementIndex);
+    
+    if (!currentAudio) {
+      updateUIState('generating');
+      currentAudio = await fetchAudioForText(text);
+      if (!currentAudio) {
+        updateUIState('error');
+        return;
+      }
+    }
+
+    if (isPaused) {
+      return; // If user paused during generation
+    }
+
+    currentAudio.onended = () => {
+      if (isPaused) return;
+      currentElementIndex++;
+      currentAudio = nextAudio;
+      nextAudio = null;
+      playCurrentChunk();
+    };
+
+    currentAudio.onerror = () => {
+      console.error("Audio playback error");
+      updateUIState('error');
+    };
+
+    try {
+      await currentAudio.play();
+      isPlaying = true;
+      updateUIState('playing');
+      
+      // Start prefetching next chunk
+      prefetchNext();
+    } catch (err) {
+      console.error('Playback failed', err);
       updateUIState('error');
     }
   };
 
   if (playBtn && pauseBtn && stopBtn) {
     playBtn.addEventListener('click', () => {
-      if (audioEl) {
-        if (audioEl.paused) {
-          audioEl.play().then(() => updateUIState('playing')).catch(() => updateUIState('error'));
-        }
+      isPaused = false;
+      if (currentAudio) {
+        currentAudio.play().then(() => {
+          isPlaying = true;
+          updateUIState('playing');
+        }).catch(() => updateUIState('error'));
       } else {
-        generateAndPlay();
+        const elements = getReadableElements();
+        if (elements.length > 0) {
+          playCurrentChunk();
+        }
       }
     });
 
     pauseBtn.addEventListener('click', () => {
-      if (audioEl) {
-        audioEl.pause();
-        updateUIState('paused');
+      isPaused = true;
+      if (currentAudio) {
+        currentAudio.pause();
       }
+      isPlaying = false;
+      updateUIState('paused');
     });
 
     stopBtn.addEventListener('click', () => {
-      if (audioEl) {
-        audioEl.pause();
-        audioEl.currentTime = 0;
+      isPaused = false;
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
       }
+      nextAudio = null;
+      currentElementIndex = 0;
+      resetHighlight();
       updateUIState('ready');
     });
-    
-    if (voiceSelector) {
-      voiceSelector.addEventListener('change', () => {
-        if (audioEl) {
-          audioEl.pause();
-          audioEl = null;
-        }
-        updateUIState('ready');
-      });
-    }
 
-    // Cleanup on page hide
     window.addEventListener('pagehide', () => {
-      if (audioEl) {
-        audioEl.pause();
-      }
+      if (currentAudio) currentAudio.pause();
     });
   }
 </script>
@@ -209,14 +322,14 @@ const { textToRead } = Astro.props;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     margin: 2rem 0;
     color: var(--white);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     transition: box-shadow 0.3s ease;
-  }
+  
 
   .premium-audio-player.is-playing {
     box-shadow: 0 10px 30px rgba(255, 107, 0, 0.15);
     border-color: rgba(255, 107, 0, 0.2);
-  }
+  
 
   .player-cover {
     width: 48px;
@@ -228,26 +341,26 @@ const { textToRead } = Astro.props;
     justify-content: center;
     flex-shrink: 0;
     box-shadow: 0 4px 10px rgba(255, 107, 0, 0.3);
-  }
+  
 
   .disc-icon {
     color: var(--white);
     animation: spin 8s linear infinite;
     animation-play-state: paused;
-  }
+  
 
   .premium-audio-player.is-playing .disc-icon {
     animation-play-state: running;
-  }
+  
 
   @keyframes spin {
-    100% { transform: rotate(360deg); }
-  }
+    100% { transform: rotate(360deg); 
+  
 
   .player-controls {
     display: flex;
     align-items: center;
-  }
+  
 
   .play-pause-btn {
     width: 40px;
@@ -261,16 +374,16 @@ const { textToRead } = Astro.props;
     justify-content: center;
     cursor: pointer;
     transition: transform 0.2s ease, background-color 0.2s ease;
-  }
+  
 
   .play-pause-btn:hover {
     transform: scale(1.05);
     background-color: var(--off-white);
-  }
+  
 
   .play-pause-btn.hidden {
     display: none;
-  }
+  
 
   .player-info {
     flex: 1;
@@ -279,7 +392,7 @@ const { textToRead } = Astro.props;
     justify-content: center;
     gap: 0.375rem;
     overflow: hidden;
-  }
+  
 
   .player-title {
     font-family: var(--font-sans);
@@ -289,14 +402,14 @@ const { textToRead } = Astro.props;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
+  
 
   .waveform {
     display: flex;
     align-items: flex-end;
     gap: 3px;
     height: 16px;
-  }
+  
 
   .waveform .bar {
     display: block;
@@ -305,43 +418,134 @@ const { textToRead } = Astro.props;
     border-radius: 2px;
     height: 20%;
     transition: background-color 0.3s ease;
-  }
+  
 
   .waveform.active .bar {
     background-color: var(--orange);
     animation: bounce 1s infinite ease-in-out alternate;
-  }
+  
 
   /* Randomize bounce delays for realistic waveform */
-  .waveform.active .bar:nth-child(1) { animation-delay: 0.0s; }
-  .waveform.active .bar:nth-child(2) { animation-delay: 0.2s; }
-  .waveform.active .bar:nth-child(3) { animation-delay: 0.4s; }
-  .waveform.active .bar:nth-child(4) { animation-delay: 0.1s; }
-  .waveform.active .bar:nth-child(5) { animation-delay: 0.5s; }
-  .waveform.active .bar:nth-child(6) { animation-delay: 0.3s; }
-  .waveform.active .bar:nth-child(7) { animation-delay: 0.6s; }
-  .waveform.active .bar:nth-child(8) { animation-delay: 0.2s; }
-  .waveform.active .bar:nth-child(9) { animation-delay: 0.7s; }
-  .waveform.active .bar:nth-child(10) { animation-delay: 0.4s; }
-  .waveform.active .bar:nth-child(11) { animation-delay: 0.1s; }
-  .waveform.active .bar:nth-child(12) { animation-delay: 0.5s; }
-  .waveform.active .bar:nth-child(13) { animation-delay: 0.3s; }
-  .waveform.active .bar:nth-child(14) { animation-delay: 0.6s; }
-  .waveform.active .bar:nth-child(15) { animation-delay: 0.2s; }
-  .waveform.active .bar:nth-child(16) { animation-delay: 0.8s; }
+  .waveform.active .bar:nth-child(1) { animation-delay: 0.0s; 
+  .waveform.active .bar:nth-child(2) { animation-delay: 0.2s; 
+  .waveform.active .bar:nth-child(3) { animation-delay: 0.4s; 
+  .waveform.active .bar:nth-child(4) { animation-delay: 0.1s; 
+  .waveform.active .bar:nth-child(5) { animation-delay: 0.5s; 
+  .waveform.active .bar:nth-child(6) { animation-delay: 0.3s; 
+  .waveform.active .bar:nth-child(7) { animation-delay: 0.6s; 
+  .waveform.active .bar:nth-child(8) { animation-delay: 0.2s; 
+  .waveform.active .bar:nth-child(9) { animation-delay: 0.7s; 
+  .waveform.active .bar:nth-child(10) { animation-delay: 0.4s; 
+  .waveform.active .bar:nth-child(11) { animation-delay: 0.1s; 
+  .waveform.active .bar:nth-child(12) { animation-delay: 0.5s; 
+  .waveform.active .bar:nth-child(13) { animation-delay: 0.3s; 
+  .waveform.active .bar:nth-child(14) { animation-delay: 0.6s; 
+  .waveform.active .bar:nth-child(15) { animation-delay: 0.2s; 
+  .waveform.active .bar:nth-child(16) { animation-delay: 0.8s; 
 
   @keyframes bounce {
-    0% { height: 20%; }
-    100% { height: 100%; }
-  }
+    0% { height: 20%; 
+    100% { height: 100%; 
+  
 
   .player-actions {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding-left: 0.5rem;
+    padding-left: 0.75rem;
     border-left: 1px solid rgba(255, 255, 255, 0.1);
-  }
+  
+
+  /* Custom Modern Dropdown Styles */
+  .voice-dropdown-container {
+    position: relative;
+  
+
+  .voice-dropdown-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--white);
+    padding: 0.4rem 0.75rem;
+    border-radius: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  
+
+  .voice-dropdown-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+  
+  
+  .voice-dropdown-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  
+
+  .voice-icon {
+    color: var(--gray-light);
+  
+
+  .chevron-icon {
+    margin-left: 0.25rem;
+    opacity: 0.7;
+    transition: transform 0.2s ease;
+  
+
+  .voice-dropdown-menu {
+    position: absolute;
+    bottom: calc(100% + 0.5rem);
+    right: 0;
+    background: #1a1a1c;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 150px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    z-index: 20;
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: bottom right;
+  
+
+  .voice-dropdown-menu.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px) scale(0.95);
+  
+
+  .voice-option {
+    background: transparent;
+    border: none;
+    color: var(--gray-light);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-radius: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  
+
+  .voice-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--white);
+  
+
+  .voice-option.active {
+    background: rgba(255, 107, 0, 0.15);
+    color: var(--orange);
+    font-weight: 500;
+  
 
   .status-text {
     font-size: 0.75rem;
@@ -349,7 +553,7 @@ const { textToRead } = Astro.props;
     color: var(--gray-light);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-  }
+  
 
   .stop-btn {
     background: none;
@@ -361,56 +565,29 @@ const { textToRead } = Astro.props;
     justify-content: center;
     padding: 0.25rem;
     transition: color 0.2s ease;
-  }
+  
 
   .stop-btn:hover {
     color: var(--orange);
-  }
+  
 
   .stop-btn.hidden {
     display: none;
-  }
-
-  .voice-selector {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--white);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 0.5rem;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-    font-family: var(--font-sans);
-    cursor: pointer;
-    outline: none;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
-  }
-
-  .voice-selector:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
-  }
-
-  .voice-selector:focus {
-    border-color: var(--orange);
-  }
-
-  .voice-selector option {
-    background-color: var(--ink);
-    color: var(--white);
-  }
+  
 
   @media (max-width: 640px) {
     .premium-audio-player {
       padding: 0.75rem;
       gap: 0.75rem;
-    }
+    
     
     .waveform .bar:nth-child(n+11) {
       display: none; /* Show fewer bars on mobile */
-    }
+    
     
     .status-text {
       display: none; /* Hide status text on small screens */
-    }
+    
     
     .player-actions {
       border-left: none;
@@ -418,10 +595,17 @@ const { textToRead } = Astro.props;
       flex-direction: column;
       gap: 0.5rem;
       align-items: flex-end;
-    }
+    
 
-    .voice-selector {
-      max-width: 100px;
-    }
+    .voice-dropdown-menu {
+      right: -1rem; /* Adjust position for mobile */
+    
+  
+
+  :global(.reading-highlight) {
+    background-color: rgba(255, 107, 0, 0.15) !important;
+    border-radius: 0.25rem;
+    box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.15);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
   }
 </style>

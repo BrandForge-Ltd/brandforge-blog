@@ -1,0 +1,5 @@
+name = "brandforge-blog"
+pages_build_output_dir = "./dist"
+
+[ai]
+binding = "AI"
