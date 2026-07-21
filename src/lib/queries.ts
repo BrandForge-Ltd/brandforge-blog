@@ -73,7 +73,7 @@ export const postsByCategoryQuery = `*[_type == "post" && $categorySlug in categ
 export const postsByCategoryCountQuery = `count(*[_type == "post" && $categorySlug in categories[]->slug.current && defined(publishedAt)])`;
 
 // All categories
-export const categoriesQuery = `*[_type == "category"] | order(title asc) {
+export const categoriesQuery = `*[_type == "category" && defined(slug.current)] | order(title asc) {
   _id,
   title,
   "slug": slug.current
