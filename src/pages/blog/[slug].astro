@@ -5,8 +5,9 @@ import { postBySlugQuery, relatedPostsQuery } from '../../lib/queries';
 import PortableTextWithTOC from '../../components/PortableTextWithTOC.tsx';
 import AudioPlayer from '../../components/AudioPlayer.astro';
 import ShareButtons from '../../components/ShareButtons.astro';
-import BlogCard from '../../components/BlogCard.astro';
 import RelatedCarousel from '../../components/RelatedCarousel.astro';
+import Sidebar from '../../components/Sidebar.astro';
+import MobileTOC from '../../components/MobileTOC.astro';
 
 export async function getStaticPaths() {
   const query = `*[_type == "post" && defined(slug.current)][]{ "slug": slug.current }`;
@@ -70,8 +71,6 @@ if (post.body) {
     }
   });
 }
-
-// The TOC headings have been extracted above. We will use a separate React component for rendering them.
 ---
 
 <Layout 
@@ -104,7 +103,7 @@ if (post.body) {
       
       <h1 class="text-display post-title">{post.title}</h1>
       
-      <div class="post-actions">
+      <div class="post-actions-mobile">
         {authors.length > 0 && (
           <div class="author-info">
             <div class="author-avatars" style="display: flex;">
@@ -126,7 +125,9 @@ if (post.body) {
             </div>
           </div>
         )}
-        <ShareButtons url={currentUrl} title={post.title} />
+        <div class="mobile-share-top">
+          <ShareButtons url={currentUrl} title={post.title} />
+        </div>
       </div>
     </header>
 
@@ -141,10 +142,27 @@ if (post.body) {
     )}
 
     <div class="post-layout container">
-      <div class="post-main">
-        <div class="executive-summary">
-          <h3>Executive Summary</h3>
-          <p>{post.excerpt}</p>
+      <!-- Left Sidebar (Share) -->
+      <aside class="post-share-sidebar">
+        <div class="sticky-share">
+          <ShareButtons url={currentUrl} title={post.title} layout="vertical" />
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="post-main">
+        <div class="summary-box">
+          <div class="summary-header">
+            <h3>Summary</h3>
+          </div>
+          <div class="summary-content" id="summaryContent">
+            <p>{post.excerpt}</p>
+          </div>
+          <button id="toggleSummaryBtn" class="toggle-summary-btn">
+            See more
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+          
           <AudioPlayer textToRead={plainTextBody} />
         </div>
 
@@ -152,35 +170,36 @@ if (post.body) {
           <PortableTextWithTOC value={post.body} />
         </div>
 
+        <!-- Footer mobile share -->
         <div class="post-footer">
           <ShareButtons url={currentUrl} title={post.title} />
         </div>
 
         {authors.length > 0 && authors.some((a: any) => typeof a !== 'string') && (
-          <div class="author-profiles-section" style="margin-top: 4rem; padding-top: 3rem; border-top: 2px solid var(--border);">
-            <h3 style="font-family: var(--font-serif); font-size: 1.5rem; color: var(--ink); margin-bottom: 2rem;">
+          <div class="author-profiles-section">
+            <h3 class="author-section-title">
               {authors.length > 1 ? 'About the Authors' : 'About the Author'}
             </h3>
-            <div style="display: flex; flex-direction: column; gap: 2rem;">
+            <div class="author-profiles-list">
               {authors.filter((a: any) => typeof a !== 'string').map((author: any) => (
-                <div class="author-profile-card" style="display: flex; gap: 1.5rem; background-color: var(--off-white); padding: 2rem; border-radius: 1rem; align-items: flex-start; flex-wrap: wrap;">
-                  <div class="author-profile-image" style="flex-shrink: 0;">
+                <div class="author-profile-card">
+                  <div class="author-profile-image">
                     {author.image ? (
-                      <img src={urlFor(author.image).width(150).height(150).url()} alt={author.name} style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" />
+                      <img src={urlFor(author.image).width(150).height(150).url()} alt={author.name} />
                     ) : (
-                      <div style="width: 80px; height: 80px; border-radius: 50%; background-color: var(--zinc-800); color: var(--white); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-size: 2rem; font-weight: 700;">
+                      <div class="author-placeholder">
                         {(author.name || 'A').charAt(0)}
                       </div>
                     )}
                   </div>
-                  <div class="author-profile-content" style="flex: 1; min-width: 200px;">
-                    <h4 style="font-family: var(--font-sans); font-size: 1.25rem; font-weight: 700; color: var(--ink); margin-bottom: 0.5rem; margin-top: 0;">{author.name}</h4>
+                  <div class="author-profile-content">
+                    <h4>{author.name}</h4>
                     {author.bio ? (
-                      <div class="author-bio-text" style="color: var(--charcoal); font-size: 1rem; line-height: 1.6;">
+                      <div class="author-bio-text">
                         <PortableTextWithTOC value={author.bio} />
                       </div>
                     ) : (
-                      <p style="color: var(--gray); font-size: 0.875rem;">Contributing Author at BrandForge.</p>
+                      <p class="author-default-bio">Contributing Author at BrandForge.</p>
                     )}
                   </div>
                 </div>
@@ -188,24 +207,16 @@ if (post.body) {
             </div>
           </div>
         )}
-      </div>
+      </main>
       
-      {tocHeadings.length > 0 && (
-        <aside class="toc-sidebar">
-          <div class="toc-sticky">
-            <h4>Table of Contents</h4>
-            <ul class="toc-list">
-              {tocHeadings.map((heading: any) => (
-                <li class={`toc-item level-${heading.level}`}>
-                  <a href={`#${heading.id}`}>{heading.text}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </aside>
-      )}
+      <!-- Right Sidebar (TOC, CTA, Categories) -->
+      <aside class="post-right-sidebar">
+        <Sidebar tocHeadings={tocHeadings} />
+      </aside>
     </div>
   </article>
+
+  <MobileTOC tocHeadings={tocHeadings} />
 
   {relatedPosts.length > 0 && (
     <section class="related-articles section-py bg-off-white">
@@ -217,6 +228,7 @@ if (post.body) {
   )}
 
   <script>
+    // Progress Bar
     const updateProgressBar = () => {
       const progressBar = document.getElementById('progress-bar');
       if (!progressBar) return;
@@ -228,12 +240,41 @@ if (post.body) {
     };
 
     window.addEventListener('scroll', updateProgressBar);
-    // Initial call in case page is loaded already scrolled
     updateProgressBar();
+
+    // Summary Toggle
+    const summaryContent = document.getElementById('summaryContent');
+    const toggleBtn = document.getElementById('toggleSummaryBtn');
+    
+    if (summaryContent && toggleBtn) {
+      // Only show toggle button if content is actually clamped
+      // A simple way is to check scrollHeight vs clientHeight, but with webkit-line-clamp it can be tricky.
+      // We will just always show it, or check if text is long enough.
+      const textLength = summaryContent.textContent?.length || 0;
+      if (textLength < 150) {
+        toggleBtn.style.display = 'none';
+        summaryContent.style.webkitLineClamp = 'unset';
+      }
+
+      toggleBtn.addEventListener('click', () => {
+        const isExpanded = summaryContent.classList.contains('expanded');
+        if (isExpanded) {
+          summaryContent.classList.remove('expanded');
+          toggleBtn.innerHTML = `See more <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+        } else {
+          summaryContent.classList.add('expanded');
+          toggleBtn.innerHTML = `See less <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron" style="transform: rotate(180deg);"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+        }
+      });
+    }
   </script>
 </Layout>
 
 <style>
+  html {
+    scroll-behavior: smooth;
+  }
+
   .blog-post {
     background-color: var(--white);
     padding-bottom: var(--section-py);
@@ -241,9 +282,10 @@ if (post.body) {
 
   .post-header {
     padding-top: calc(var(--section-py) * 0.8);
-    padding-bottom: 3rem;
+    padding-bottom: 2rem;
     max-width: 900px;
     margin: 0 auto;
+    text-align: center;
   }
 
   .back-link {
@@ -266,6 +308,7 @@ if (post.body) {
   .meta {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 1rem;
     margin-bottom: 1.5rem;
   }
@@ -277,17 +320,24 @@ if (post.body) {
   }
 
   .post-title {
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
   }
 
-  .post-actions {
+  .post-actions-mobile {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 2rem;
+    flex-direction: column;
+    gap: 1.5rem;
     padding-top: 2rem;
     border-top: 1px solid var(--border);
+  }
+
+  @media (min-width: 768px) {
+    .post-actions-mobile {
+      flex-direction: row;
+      justify-content: space-between;
+    }
   }
 
   .author-info {
@@ -313,6 +363,7 @@ if (post.body) {
   .author-details {
     display: flex;
     flex-direction: column;
+    text-align: left;
   }
 
   .author-label {
@@ -328,111 +379,144 @@ if (post.body) {
     color: var(--ink);
   }
 
+  .mobile-share-top {
+    display: block;
+  }
+
+  @media (min-width: 1024px) {
+    .mobile-share-top {
+      display: none;
+    }
+  }
+
   .cover-image-container {
     margin-bottom: 4rem;
   }
 
   .cover-image {
     width: 100%;
-    border-radius: 1rem;
+    border-radius: 1.5rem;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 
+  /* 3-Column Layout */
   .post-layout {
     display: grid;
     grid-template-columns: 1fr;
     gap: 3rem;
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 0 auto;
   }
 
   @media (min-width: 1024px) {
     .post-layout {
-      grid-template-columns: 1fr 300px;
+      grid-template-columns: 60px 1fr 320px;
+      gap: 3rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .post-layout {
+      grid-template-columns: 60px 1fr 350px;
+      gap: 4rem;
     }
   }
 
   .post-main {
-    min-width: 0; /* Prevents overflow in grid */
+    min-width: 0;
   }
 
-  /* Table of Contents */
-  .toc-sidebar {
+  .post-share-sidebar {
     display: none;
   }
 
   @media (min-width: 1024px) {
-    .toc-sidebar {
+    .post-share-sidebar {
       display: block;
     }
   }
 
-  .toc-sticky {
+  .sticky-share {
     position: sticky;
-    top: 100px;
-    background-color: var(--off-white);
-    padding: 1.5rem;
-    border-radius: 1rem;
-    border: 1px solid var(--border);
-  }
-
-  .toc-sticky h4 {
-    font-family: var(--font-serif);
-    font-size: 1.125rem;
-    margin-bottom: 1rem;
-    color: var(--ink);
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--border);
-  }
-
-  .toc-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    top: 120px;
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    justify-content: center;
   }
 
-  .toc-item a {
-    color: var(--charcoal);
-    font-size: 0.875rem;
-    text-decoration: none;
-    transition: color 0.2s ease;
-    display: block;
-    line-height: 1.4;
+  .post-right-sidebar {
+    display: none;
   }
 
-  .toc-item a:hover {
-    color: var(--orange);
+  @media (min-width: 1024px) {
+    .post-right-sidebar {
+      display: block;
+    }
   }
 
-  .toc-item.level-3 {
-    padding-left: 1rem;
-    font-size: 0.8125rem;
-    opacity: 0.9;
-  }
-
-  .executive-summary {
+  /* Summary Box */
+  .summary-box {
     background-color: var(--off-white);
-    padding: 2rem;
-    border-radius: 1rem;
+    padding: 2.5rem;
+    border-radius: 1.5rem;
     margin-bottom: 3rem;
-    border-left: 4px solid var(--orange);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
   }
 
-  .executive-summary h3 {
+  .summary-header h3 {
     font-family: var(--font-serif);
     font-size: 1.5rem;
     color: var(--ink);
     margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
   }
 
-  .executive-summary p {
+  .summary-header h3::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 1.5rem;
+    background-color: var(--orange);
+    border-radius: 2px;
+  }
+
+  .summary-content {
     font-size: 1.125rem;
     color: var(--charcoal);
     line-height: 1.6;
-    margin-bottom: 1.5rem;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .summary-content.expanded {
+    -webkit-line-clamp: unset;
+  }
+
+  .toggle-summary-btn {
+    background: none;
+    border: none;
+    color: var(--orange);
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 0.875rem;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: color 0.2s ease;
+  }
+
+  .toggle-summary-btn:hover {
+    color: var(--ink);
   }
 
   /* Basic Prose Styles */
@@ -445,15 +529,15 @@ if (post.body) {
   .prose :global(h2) {
     font-family: var(--font-serif);
     font-size: 2rem;
-    margin-top: 3rem;
-    margin-bottom: 1rem;
+    margin-top: 3.5rem;
+    margin-bottom: 1.5rem;
     color: var(--ink);
   }
 
   .prose :global(h3) {
     font-family: var(--font-serif);
     font-size: 1.5rem;
-    margin-top: 2rem;
+    margin-top: 2.5rem;
     margin-bottom: 1rem;
     color: var(--ink);
   }
@@ -475,29 +559,122 @@ if (post.body) {
     color: var(--orange);
     text-decoration: underline;
     text-underline-offset: 4px;
+    font-weight: 500;
   }
 
   .prose :global(blockquote) {
     border-left: 4px solid var(--orange);
     padding-left: 1.5rem;
-    margin: 2rem 0;
+    margin: 2.5rem 0;
     font-family: var(--font-serif);
     font-size: 1.5rem;
     font-style: italic;
     color: var(--ink);
+    background-color: var(--off-white);
+    padding: 1.5rem 1.5rem 1.5rem 2rem;
+    border-radius: 0 1rem 1rem 0;
   }
   
   .prose :global(img) {
-    border-radius: 0.75rem;
-    margin: 2rem 0;
+    border-radius: 1rem;
+    margin: 3rem 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   }
 
+  /* Mobile share footer */
   .post-footer {
     margin-top: 4rem;
     padding-top: 2rem;
     border-top: 1px solid var(--border);
     display: flex;
     justify-content: center;
+  }
+
+  @media (min-width: 1024px) {
+    .post-footer {
+      display: none;
+    }
+  }
+
+  /* Authors Section */
+  .author-profiles-section {
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 2px solid var(--border);
+  }
+
+  .author-section-title {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    color: var(--ink);
+    margin-bottom: 2rem;
+  }
+
+  .author-profiles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .author-profile-card {
+    display: flex;
+    gap: 1.5rem;
+    background-color: var(--off-white);
+    padding: 2rem;
+    border-radius: 1rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    border: 1px solid var(--border);
+  }
+
+  .author-profile-image {
+    flex-shrink: 0;
+  }
+
+  .author-profile-image img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .author-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: var(--zinc-800);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-serif);
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  .author-profile-content {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .author-profile-content h4 {
+    font-family: var(--font-sans);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+    margin-top: 0;
+  }
+
+  .author-bio-text {
+    color: var(--charcoal);
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .author-default-bio {
+    color: var(--gray);
+    font-size: 0.875rem;
   }
 
   /* Related Articles */
@@ -511,18 +688,5 @@ if (post.body) {
     margin-bottom: 3rem;
     color: var(--ink);
     text-align: center;
-  }
-
-  .post-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  @media (min-width: 768px) {
-    .post-grid {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 3rem;
-    }
   }
 </style>
