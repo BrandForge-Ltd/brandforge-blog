@@ -9,6 +9,7 @@ export default defineConfig({
 
   projectId: 'aejxymic',
   dataset: 'production',
+  basePath: '/studio',
 
   plugins: [structureTool(), visionTool()],
 
