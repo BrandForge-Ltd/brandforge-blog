@@ -74,7 +74,11 @@ if (post.body) {
 // The TOC headings have been extracted above. We will use a separate React component for rendering them.
 ---
 
-<Layout title={post.title} description={post.excerpt}>
+<Layout 
+  title={post.title} 
+  description={post.excerpt} 
+  image={post.mainImage ? urlFor(post.mainImage).width(1200).height(630).url() : undefined}
+>
   <div id="progress-container" style="position: sticky; top: 80px; width: 100%; height: 4px; background-color: transparent; z-index: 99; margin-top: -4px;">
     <div id="progress-bar" style="width: 0%; height: 100%; background-color: var(--orange); transition: width 0.1s ease-out;"></div>
   </div>
