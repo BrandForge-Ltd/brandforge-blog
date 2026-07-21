@@ -16,6 +16,7 @@
     "@sanity/client": "^7.23.0",
     "@sanity/schema": "^6.3.0",
     "jsdom": "^29.1.1",
+    "playwright": "^1.61.1",
     "puppeteer": "^25.3.0"
   }
 }
