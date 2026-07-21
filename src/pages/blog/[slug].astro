@@ -24,6 +24,8 @@ if (!post) {
   return Astro.redirect('/404');
 }
 
+const authors = post.authors || (post.author ? [post.author] : []);
+
 // Fetch related articles
 let relatedPosts = [];
 if (post.category && post.category._id) {
@@ -99,12 +101,24 @@ if (post.body) {
       <h1 class="text-display post-title">{post.title}</h1>
       
       <div class="post-actions">
-        {post.author && (
+        {authors.length > 0 && (
           <div class="author-info">
-            <div class="author-avatar">{(typeof post.author === 'string' ? post.author : (post.author.name || 'A')).charAt(0)}</div>
+            <div class="author-avatars" style="display: flex;">
+              {authors.map((author: any, index: number) => (
+                <div class="author-avatar" style={index > 0 ? "margin-left: -1rem; border: 2px solid var(--white);" : ""}>
+                  {author.image ? (
+                    <img src={urlFor(author.image).width(100).height(100).url()} alt={typeof author === 'string' ? author : author.name} style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />
+                  ) : (
+                    (typeof author === 'string' ? author : (author.name || 'A')).charAt(0)
+                  )}
+                </div>
+              ))}
+            </div>
             <div class="author-details">
               <span class="author-label">Written By</span>
-              <span class="author-name">{typeof post.author === 'string' ? post.author : post.author.name}</span>
+              <span class="author-name">
+                {authors.map((a: any) => typeof a === 'string' ? a : a.name).join(' & ')}
+              </span>
             </div>
           </div>
         )}
@@ -137,6 +151,39 @@ if (post.body) {
         <div class="post-footer">
           <ShareButtons url={currentUrl} title={post.title} />
         </div>
+
+        {authors.length > 0 && authors.some((a: any) => typeof a !== 'string') && (
+          <div class="author-profiles-section" style="margin-top: 4rem; padding-top: 3rem; border-top: 2px solid var(--border);">
+            <h3 style="font-family: var(--font-serif); font-size: 1.5rem; color: var(--ink); margin-bottom: 2rem;">
+              {authors.length > 1 ? 'About the Authors' : 'About the Author'}
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+              {authors.filter((a: any) => typeof a !== 'string').map((author: any) => (
+                <div class="author-profile-card" style="display: flex; gap: 1.5rem; background-color: var(--off-white); padding: 2rem; border-radius: 1rem; align-items: flex-start; flex-wrap: wrap;">
+                  <div class="author-profile-image" style="flex-shrink: 0;">
+                    {author.image ? (
+                      <img src={urlFor(author.image).width(150).height(150).url()} alt={author.name} style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" />
+                    ) : (
+                      <div style="width: 80px; height: 80px; border-radius: 50%; background-color: var(--zinc-800); color: var(--white); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-size: 2rem; font-weight: 700;">
+                        {(author.name || 'A').charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div class="author-profile-content" style="flex: 1; min-width: 200px;">
+                    <h4 style="font-family: var(--font-sans); font-size: 1.25rem; font-weight: 700; color: var(--ink); margin-bottom: 0.5rem; margin-top: 0;">{author.name}</h4>
+                    {author.bio ? (
+                      <div class="author-bio-text" style="color: var(--charcoal); font-size: 1rem; line-height: 1.6;">
+                        <PortableTextWithTOC value={author.bio} />
+                      </div>
+                    ) : (
+                      <p style="color: var(--gray); font-size: 0.875rem;">Contributing Author at BrandForge.</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       
       {tocHeadings.length > 0 && (

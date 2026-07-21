@@ -8,7 +8,8 @@ export const postsQuery = `*[_type == "post" && defined(publishedAt)] | order(pu
   featured,
   "coverImage": mainImage,
   "category": categories[0]->{ _id, title, "slug": slug.current },
-  author,
+  "author": author->{ name, "slug": slug.current, image, bio },
+  "authors": authors[]->{ name, "slug": slug.current, image, bio },
   "readingTime": round(length(pt::text(body)) / 5 / 180)
 }`;
 
@@ -23,7 +24,8 @@ export const featuredPostsQuery = `*[_type == "post" && defined(publishedAt)] | 
   "excerpt": seoDescription,
   "coverImage": mainImage,
   "category": categories[0]->{ _id, title, "slug": slug.current },
-  author,
+  "author": author->{ name, "slug": slug.current, image, bio },
+  "authors": authors[]->{ name, "slug": slug.current, image, bio },
   "readingTime": round(length(pt::text(body)) / 5 / 180)
 }`;
 
@@ -36,7 +38,8 @@ export const postBySlugQuery = `*[_type == "post" && slug.current == $slug][0] {
   "excerpt": seoDescription,
   "coverImage": mainImage,
   body,
-  author,
+  "author": author->{ name, "slug": slug.current, image, bio },
+  "authors": authors[]->{ name, "slug": slug.current, image, bio },
   "category": categories[0]->{ _id, title, "slug": slug.current },
   "readingTime": round(length(pt::text(body)) / 5 / 180)
 }`;
@@ -62,7 +65,8 @@ export const postsByCategoryQuery = `*[_type == "post" && $categorySlug in categ
   "excerpt": seoDescription,
   "coverImage": mainImage,
   "category": categories[0]->{ _id, title, "slug": slug.current },
-  author,
+  "author": author->{ name, "slug": slug.current, image, bio },
+  "authors": authors[]->{ name, "slug": slug.current, image, bio },
   "readingTime": round(length(pt::text(body)) / 5 / 180)
 }`;
 
