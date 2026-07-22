@@ -102,11 +102,18 @@ export default function HeroSlider({ posts }: { posts: Post[] }) {
         .hero-slider {
           position: relative;
           width: 100%;
-          aspect-ratio: 16/9;
-          max-height: 600px;
+          min-height: 500px;
+          aspect-ratio: 4/5;
           border-radius: 1.5rem;
           overflow: hidden;
           background-color: var(--zinc-800);
+        }
+        
+        @media (min-width: 768px) {
+          .hero-slider {
+            aspect-ratio: 16/9;
+            min-height: auto;
+          }
         }
         
         @media (min-width: 1024px) {
@@ -176,14 +183,14 @@ export default function HeroSlider({ posts }: { posts: Post[] }) {
         
         .hero-title {
           font-family: var(--font-serif);
-          font-size: clamp(2rem, 5vw, 3.5rem);
+          font-size: clamp(1.75rem, 6vw, 3.5rem);
           font-weight: 700;
-          line-height: 1.1;
+          line-height: 1.15;
           margin-bottom: 1rem;
           color: var(--white);
           transition: color 0.2s ease;
           display: -webkit-box;
-          -webkit-line-clamp: 3;
+          -webkit-line-clamp: 4;
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
@@ -194,15 +201,24 @@ export default function HeroSlider({ posts }: { posts: Post[] }) {
         
         .hero-excerpt {
           font-family: var(--font-sans);
-          font-size: 1.125rem;
-          line-height: 1.6;
-          margin-bottom: 2rem;
+          font-size: 1rem;
+          line-height: 1.5;
+          margin-bottom: 1.5rem;
           color: var(--gray-light);
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
           max-width: 600px;
+        }
+        
+        @media (min-width: 768px) {
+          .hero-excerpt {
+            font-size: 1.125rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            -webkit-line-clamp: 3;
+          }
         }
         
         .hero-meta {

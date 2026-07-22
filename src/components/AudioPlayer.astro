@@ -32,16 +32,17 @@
 
   <div class="player-actions">
     <div class="voice-dropdown-container" id="voiceDropdownContainer">
-      <button id="voiceDropdownBtn" class="voice-dropdown-btn">
-        <svg class="voice-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
-        <span id="selectedVoiceLabel">Asteria</span>
-        <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      <button id="voiceDropdownBtn" class="voice-settings-btn" aria-label="Change Voice" title="Change Voice">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
       </button>
-      <div id="voiceDropdownMenu" class="voice-dropdown-menu hidden">
-        <button class="voice-option active" data-voice="asteria">Asteria (Female)</button>
-        <button class="voice-option" data-voice="luna">Luna (Female)</button>
-        <button class="voice-option" data-voice="orion">Orion (Male)</button>
-        <button class="voice-option" data-voice="zeus">Zeus (Male)</button>
+      <div id="voiceDropdownMenu" class="modern-voice-menu hidden">
+        <div class="menu-header">Select Voice</div>
+        <div class="voice-grid">
+          <button class="voice-chip active" data-voice="asteria">Asteria</button>
+          <button class="voice-chip" data-voice="luna">Luna</button>
+          <button class="voice-chip" data-voice="orion">Orion</button>
+          <button class="voice-chip" data-voice="zeus">Zeus</button>
+        </div>
       </div>
     </div>
     
@@ -64,8 +65,7 @@
   // Custom Dropdown logic
   const voiceDropdownBtn = document.getElementById('voiceDropdownBtn');
   const voiceDropdownMenu = document.getElementById('voiceDropdownMenu');
-  const voiceOptions = document.querySelectorAll('.voice-option');
-  const selectedVoiceLabel = document.getElementById('selectedVoiceLabel');
+  const voiceOptions = document.querySelectorAll('.voice-chip');
   
   let selectedVoice = 'asteria';
   
@@ -79,19 +79,18 @@
       voiceDropdownMenu.classList.add('hidden');
     });
     
+    // Prevent closing when clicking inside the menu
+    voiceDropdownMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+    
     voiceOptions.forEach(option => {
       option.addEventListener('click', (e) => {
-        e.stopPropagation();
         const target = e.currentTarget;
         
         voiceOptions.forEach(opt => opt.classList.remove('active'));
         target.classList.add('active');
         selectedVoice = target.getAttribute('data-voice') || 'asteria';
-        
-        if (selectedVoiceLabel) {
-          const text = target.textContent || '';
-          selectedVoiceLabel.textContent = text.split(' (')[0];
-        }
         
         voiceDropdownMenu.classList.add('hidden');
         
@@ -461,90 +460,97 @@
     position: relative;
   }
 
-  .voice-dropdown-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--white);
-    padding: 0.4rem 0.75rem;
-    border-radius: 2rem;
+  .voice-settings-btn {
+    background: transparent;
+    border: none;
+    color: var(--gray-light);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-family: var(--font-sans);
-    font-size: 0.75rem;
-    font-weight: 500;
+    justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
   }
 
-  .voice-dropdown-btn:hover:not(:disabled) {
+  .voice-settings-btn:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--white);
   }
   
-  .voice-dropdown-btn:disabled {
+  .voice-settings-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
 
-  .voice-icon {
-    color: var(--gray-light);
-  }
-
-  .chevron-icon {
-    margin-left: 0.25rem;
-    opacity: 0.7;
-    transition: transform 0.2s ease;
-  }
-
-  .voice-dropdown-menu {
+  .modern-voice-menu {
     position: absolute;
-    bottom: calc(100% + 0.5rem);
+    bottom: calc(100% + 1rem);
     right: 0;
-    background: #1a1a1c;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0.75rem;
-    padding: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    min-width: 150px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    background: rgba(26, 26, 28, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    padding: 1rem;
+    width: 220px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
     z-index: 20;
     opacity: 1;
     transform: translateY(0);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     transform-origin: bottom right;
   }
 
-  .voice-dropdown-menu.hidden {
+  .modern-voice-menu.hidden {
     opacity: 0;
     pointer-events: none;
     transform: translateY(10px) scale(0.95);
   }
 
-  .voice-option {
-    background: transparent;
-    border: none;
+  .menu-header {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .voice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .voice-chip {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     color: var(--gray-light);
-    padding: 0.5rem 0.75rem;
-    text-align: left;
+    padding: 0.5rem;
     border-radius: 0.5rem;
     font-family: var(--font-sans);
     font-size: 0.8rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    text-align: center;
   }
 
-  .voice-option:hover {
-    background: rgba(255, 255, 255, 0.05);
+  .voice-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
     color: var(--white);
+    border-color: rgba(255, 255, 255, 0.1);
   }
 
-  .voice-option.active {
-    background: rgba(255, 107, 0, 0.15);
+  .voice-chip.active {
+    background: rgba(255, 107, 0, 0.1);
     color: var(--orange);
+    border-color: rgba(255, 107, 0, 0.3);
     font-weight: 500;
+    box-shadow: 0 0 10px rgba(255, 107, 0, 0.1);
   }
 
   .status-text {
@@ -597,8 +603,8 @@
       align-items: flex-end;
     }
 
-    .voice-dropdown-menu {
-      right: -1rem; /* Adjust position for mobile */
+    .modern-voice-menu {
+      right: -2rem; /* Adjust position for mobile */
     }
   }
 
