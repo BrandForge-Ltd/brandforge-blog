@@ -1,5 +1,5 @@
 ---
-// AudioPlayer Component
+// AudioPlayer Component — powered by Kokoro TTS (in-browser AI, no server required)
 ---
 <div class="premium-audio-player" id="audioPlayerContainer">
   <div class="player-cover">
@@ -34,19 +34,19 @@
     <div class="voice-dropdown-container" id="voiceDropdownContainer">
       <button id="voiceDropdownBtn" class="voice-dropdown-btn">
         <svg class="voice-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
-        <span id="selectedVoiceLabel">Asteria</span>
+        <span id="selectedVoiceLabel">Heart</span>
         <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </button>
       <div id="voiceDropdownMenu" class="voice-dropdown-menu hidden">
-        <button class="voice-option active" data-voice="asteria">Asteria (Female)</button>
-        <button class="voice-option" data-voice="luna">Luna (Female)</button>
-        <button class="voice-option" data-voice="orion">Orion (Male)</button>
-        <button class="voice-option" data-voice="zeus">Zeus (Male)</button>
+        <button class="voice-option active" data-voice="af_heart">Heart ♀</button>
+        <button class="voice-option" data-voice="af_bella">Bella ♀</button>
+        <button class="voice-option" data-voice="am_fenrir">Fenrir ♂</button>
+        <button class="voice-option" data-voice="am_puck">Puck ♂</button>
       </div>
     </div>
-    
+
     <span class="status-text" id="statusText">Ready</span>
-    
+
     <button id="stopBtn" class="stop-btn hidden" aria-label="Stop reading" title="Stop">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect></svg>
     </button>
@@ -54,191 +54,173 @@
 </div>
 
 <script>
-  const playBtn = document.getElementById('playBtn');
-  const pauseBtn = document.getElementById('pauseBtn');
-  const stopBtn = document.getElementById('stopBtn');
-  const statusText = document.getElementById('statusText');
-  const waveform = document.getElementById('waveform');
-  const playerContainer = document.getElementById('audioPlayerContainer');
-  
-  // Custom Dropdown logic
-  const voiceDropdownBtn = document.getElementById('voiceDropdownBtn');
-  const voiceDropdownMenu = document.getElementById('voiceDropdownMenu');
-  const voiceOptions = document.querySelectorAll('.voice-option');
-  const selectedVoiceLabel = document.getElementById('selectedVoiceLabel');
-  
-  let selectedVoice = 'asteria';
-  
-  if (voiceDropdownBtn && voiceDropdownMenu) {
-    voiceDropdownBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      voiceDropdownMenu.classList.toggle('hidden');
-    });
-    
-    document.addEventListener('click', () => {
-      voiceDropdownMenu.classList.add('hidden');
-    });
-    
-    voiceOptions.forEach(option => {
-      option.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const target = e.currentTarget;
-        
-        voiceOptions.forEach(opt => opt.classList.remove('active'));
-        target.classList.add('active');
-        selectedVoice = target.getAttribute('data-voice') || 'asteria';
-        
-        if (selectedVoiceLabel) {
-          const text = target.textContent || '';
-          selectedVoiceLabel.textContent = text.split(' (')[0];
-        }
-        
-        voiceDropdownMenu.classList.add('hidden');
-        
-        if (currentAudio) {
-          currentAudio.pause();
-          currentAudio = null;
-        }
-        updateUIState('ready');
-        resetHighlight();
-        currentElementIndex = 0;
-      });
-    });
-  }
+  import { KokoroTTS } from 'kokoro-js';
 
-  let readableElements = [];
+  const MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
+
+  // ── DOM refs ──────────────────────────────────────────────────────────────
+  const playBtn        = document.getElementById('playBtn') as HTMLButtonElement;
+  const pauseBtn       = document.getElementById('pauseBtn') as HTMLButtonElement;
+  const stopBtn        = document.getElementById('stopBtn') as HTMLButtonElement;
+  const statusText     = document.getElementById('statusText') as HTMLSpanElement;
+  const waveformEl     = document.getElementById('waveform') as HTMLDivElement;
+  const playerContainer= document.getElementById('audioPlayerContainer') as HTMLDivElement;
+  const voiceDropdownBtn = document.getElementById('voiceDropdownBtn') as HTMLButtonElement;
+  const voiceDropdownMenu= document.getElementById('voiceDropdownMenu') as HTMLDivElement;
+  const selectedVoiceLabel = document.getElementById('selectedVoiceLabel') as HTMLSpanElement;
+  const voiceOptions   = document.querySelectorAll<HTMLButtonElement>('.voice-option');
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  let tts: InstanceType<typeof KokoroTTS> | null = null;
+  let isModelLoading = false;
+  let selectedVoice  = 'af_heart';
+
+  let readableElements: Element[] = [];
   let currentElementIndex = 0;
-  
-  let currentAudio = null;
-  let nextAudio = null;
-  let isPlaying = false;
-  let isGenerating = false;
-  let isPaused = false;
+  let currentAudio: HTMLAudioElement | null = null;
+  let nextAudio: HTMLAudioElement | null = null;
+  let isPlaying  = false;
+  let isPaused   = false;
 
-  const getReadableElements = () => {
+  // ── UI state machine ─────────────────────────────────────────────────────
+  const setState = (state: string) => {
+    const active = state === 'generating' || state === 'playing';
+    playBtn.classList.toggle('hidden',  state === 'playing' || state === 'generating');
+    pauseBtn.classList.toggle('hidden', state !== 'playing');
+    stopBtn.classList.toggle('hidden',  state === 'ready' || state === 'error');
+    waveformEl.classList.toggle('active', active);
+    playerContainer.classList.toggle('is-playing', active);
+    voiceDropdownBtn.disabled = active || isModelLoading;
+
+    const labels: Record<string, string> = {
+      loading:    'Loading…',
+      generating: 'Generating…',
+      playing:    'Playing',
+      paused:     'Paused',
+      error:      'Error',
+      ready:      'Ready',
+    };
+    statusText.textContent = labels[state] ?? 'Ready';
+  };
+
+  // ── Voice dropdown ────────────────────────────────────────────────────────
+  voiceDropdownBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    voiceDropdownMenu.classList.toggle('hidden');
+  });
+  document.addEventListener('click', () => voiceDropdownMenu.classList.add('hidden'));
+
+  voiceOptions.forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      voiceOptions.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      selectedVoice = opt.getAttribute('data-voice') || 'af_heart';
+      selectedVoiceLabel.textContent = (opt.textContent || '').replace(/ [♀♂]/, '');
+      voiceDropdownMenu.classList.add('hidden');
+      // Reset so next play uses new voice
+      if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+      nextAudio = null;
+      resetHighlight();
+      currentElementIndex = 0;
+      setState('ready');
+    });
+  });
+
+  // ── Model loader ──────────────────────────────────────────────────────────
+  const loadModel = async (): Promise<InstanceType<typeof KokoroTTS> | null> => {
+    if (tts) return tts;
+    if (isModelLoading) return null;
+    isModelLoading = true;
+    voiceDropdownBtn.disabled = true;
+    setState('loading');
+
+    try {
+      tts = await KokoroTTS.from_pretrained(MODEL_ID, {
+        dtype: 'q8',   // ~86MB quantised — best size/quality balance
+        device: 'wasm',
+        progress_callback: ({ status, progress }: { status: string; progress?: number; file?: string }) => {
+          if (status === 'progress' && progress != null) {
+            statusText.textContent = `Loading ${Math.round(progress)}%`;
+          }
+        },
+      });
+    } catch (err) {
+      console.error('[Kokoro] Model load failed:', err);
+      isModelLoading = false;
+      setState('error');
+      return null;
+    }
+
+    isModelLoading = false;
+    return tts;
+  };
+
+  // ── Audio helpers ─────────────────────────────────────────────────────────
+  const getReadableElements = (): Element[] => {
     if (readableElements.length === 0) {
-      readableElements = Array.from(document.querySelectorAll('.prose p, .prose h2, .prose h3, .prose li'))
-        .filter(el => el.textContent.trim().length > 0);
+      readableElements = Array.from(
+        document.querySelectorAll('.prose p, .prose h2, .prose h3, .prose li')
+      ).filter(el => (el.textContent || '').trim().length > 0);
     }
     return readableElements;
   };
 
-  const updateUIState = (state) => {
-    if (!playBtn || !pauseBtn || !stopBtn || !statusText || !waveform || !playerContainer) return;
-
-    if (state === 'generating') {
-      playBtn.classList.add('hidden');
-      pauseBtn.classList.add('hidden');
-      stopBtn.classList.remove('hidden');
-      statusText.textContent = 'Generating...';
-      waveform.classList.add('active');
-      playerContainer.classList.add('is-playing');
-      if (voiceDropdownBtn) voiceDropdownBtn.disabled = true;
-    } else if (state === 'playing') {
-      playBtn.classList.add('hidden');
-      pauseBtn.classList.remove('hidden');
-      stopBtn.classList.remove('hidden');
-      statusText.textContent = 'Playing';
-      waveform.classList.add('active');
-      playerContainer.classList.add('is-playing');
-      if (voiceDropdownBtn) voiceDropdownBtn.disabled = true;
-    } else if (state === 'paused') {
-      playBtn.classList.remove('hidden');
-      pauseBtn.classList.add('hidden');
-      stopBtn.classList.remove('hidden');
-      statusText.textContent = 'Paused';
-      waveform.classList.remove('active');
-      playerContainer.classList.remove('is-playing');
-      if (voiceDropdownBtn) voiceDropdownBtn.disabled = false;
-    } else if (state === 'error') {
-      playBtn.classList.remove('hidden');
-      pauseBtn.classList.add('hidden');
-      stopBtn.classList.add('hidden');
-      statusText.textContent = 'Error';
-      waveform.classList.remove('active');
-      playerContainer.classList.remove('is-playing');
-      isGenerating = false;
-      isPlaying = false;
-      if (voiceDropdownBtn) voiceDropdownBtn.disabled = false;
-    } else {
-      playBtn.classList.remove('hidden');
-      pauseBtn.classList.add('hidden');
-      stopBtn.classList.add('hidden');
-      statusText.textContent = 'Ready';
-      waveform.classList.remove('active');
-      playerContainer.classList.remove('is-playing');
-      isGenerating = false;
-      isPlaying = false;
-      if (voiceDropdownBtn) voiceDropdownBtn.disabled = false;
-    }
-  };
-
-  const resetHighlight = () => {
+  const resetHighlight = () =>
     getReadableElements().forEach(el => el.classList.remove('reading-highlight'));
-  };
 
-  const highlightElement = (index) => {
+  const highlightElement = (index: number) => {
     resetHighlight();
-    const elements = getReadableElements();
-    if (index >= 0 && index < elements.length) {
-      const el = elements[index];
-      el.classList.add('reading-highlight');
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const els = getReadableElements();
+    if (index >= 0 && index < els.length) {
+      els[index].classList.add('reading-highlight');
+      els[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
 
-  const fetchAudioForText = async (text) => {
+  const generateAudio = async (text: string): Promise<HTMLAudioElement | null> => {
+    const model = await loadModel();
+    if (!model) return null;
     try {
-      const response = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, voice: selectedVoice })
-      });
-      if (!response.ok) throw new Error('TTS fetch failed');
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      return audio;
+      setState('generating');
+      const rawAudio = await model.generate(text, { voice: selectedVoice });
+      const blob = rawAudio.toBlob();
+      const url  = URL.createObjectURL(blob);
+      return new Audio(url);
     } catch (err) {
-      console.error(err);
+      console.error('[Kokoro] Generation failed:', err);
       return null;
     }
   };
 
   const prefetchNext = async () => {
-    const elements = getReadableElements();
-    if (currentElementIndex + 1 < elements.length) {
-      const text = elements[currentElementIndex + 1].textContent.trim();
-      nextAudio = await fetchAudioForText(text);
+    const els = getReadableElements();
+    if (currentElementIndex + 1 < els.length) {
+      const text = (els[currentElementIndex + 1].textContent || '').trim();
+      nextAudio = await generateAudio(text);
     } else {
       nextAudio = null;
     }
   };
 
   const playCurrentChunk = async () => {
-    const elements = getReadableElements();
-    if (currentElementIndex >= elements.length) {
+    const els = getReadableElements();
+    if (currentElementIndex >= els.length) {
       resetHighlight();
-      updateUIState('ready');
+      setState('ready');
       currentElementIndex = 0;
       return;
     }
 
-    const text = elements[currentElementIndex].textContent.trim();
+    const text = (els[currentElementIndex].textContent || '').trim();
     highlightElement(currentElementIndex);
-    
+
     if (!currentAudio) {
-      updateUIState('generating');
-      currentAudio = await fetchAudioForText(text);
-      if (!currentAudio) {
-        updateUIState('error');
-        return;
-      }
+      currentAudio = await generateAudio(text);
+      if (!currentAudio) { setState('error'); return; }
     }
 
-    if (isPaused) {
-      return;
-    }
+    if (isPaused) return;
 
     currentAudio.onended = () => {
       if (isPaused) return;
@@ -248,64 +230,48 @@
       playCurrentChunk();
     };
 
-    currentAudio.onerror = () => {
-      console.error("Audio playback error");
-      updateUIState('error');
-    };
+    currentAudio.onerror = () => { console.error('[Kokoro] Playback error'); setState('error'); };
 
     try {
       await currentAudio.play();
       isPlaying = true;
-      updateUIState('playing');
-      prefetchNext();
+      setState('playing');
+      prefetchNext(); // start generating next chunk in background
     } catch (err) {
-      console.error('Playback failed', err);
-      updateUIState('error');
+      console.error('[Kokoro] play() failed:', err);
+      setState('error');
     }
   };
 
-  if (playBtn && pauseBtn && stopBtn) {
-    playBtn.addEventListener('click', () => {
-      isPaused = false;
-      if (currentAudio) {
-        currentAudio.play().then(() => {
-          isPlaying = true;
-          updateUIState('playing');
-        }).catch(() => updateUIState('error'));
-      } else {
-        const elements = getReadableElements();
-        if (elements.length > 0) {
-          playCurrentChunk();
-        }
-      }
-    });
+  // ── Button handlers ───────────────────────────────────────────────────────
+  playBtn.addEventListener('click', () => {
+    isPaused = false;
+    if (currentAudio) {
+      currentAudio.play()
+        .then(() => { isPlaying = true; setState('playing'); })
+        .catch(() => setState('error'));
+    } else if (getReadableElements().length > 0) {
+      playCurrentChunk();
+    }
+  });
 
-    pauseBtn.addEventListener('click', () => {
-      isPaused = true;
-      if (currentAudio) {
-        currentAudio.pause();
-      }
-      isPlaying = false;
-      updateUIState('paused');
-    });
+  pauseBtn.addEventListener('click', () => {
+    isPaused = true;
+    currentAudio?.pause();
+    isPlaying = false;
+    setState('paused');
+  });
 
-    stopBtn.addEventListener('click', () => {
-      isPaused = false;
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        currentAudio = null;
-      }
-      nextAudio = null;
-      currentElementIndex = 0;
-      resetHighlight();
-      updateUIState('ready');
-    });
+  stopBtn.addEventListener('click', () => {
+    isPaused = false;
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    nextAudio = null;
+    currentElementIndex = 0;
+    resetHighlight();
+    setState('ready');
+  });
 
-    window.addEventListener('pagehide', () => {
-      if (currentAudio) currentAudio.pause();
-    });
-  }
+  window.addEventListener('pagehide', () => currentAudio?.pause());
 </script>
 
 <style>
@@ -452,7 +418,6 @@
     flex-shrink: 0;
   }
 
-  /* Voice dropdown */
   .voice-dropdown-container {
     position: relative;
   }
@@ -574,7 +539,7 @@
     display: none;
   }
 
-  /* Mobile */
+  /* Mobile: wrap actions to a second row */
   @media (max-width: 600px) {
     .premium-audio-player {
       flex-wrap: wrap;
@@ -582,23 +547,21 @@
       gap: 0.75rem;
     }
 
-    /* Cover + controls stay on the left */
     .player-cover {
       width: 40px;
       height: 40px;
     }
 
-    /* Info takes remaining space on row 1 */
     .player-info {
       flex: 1;
     }
 
-    /* Fewer waveform bars */
+    /* Hide extra waveform bars */
     .waveform .bar:nth-child(n+9) {
       display: none;
     }
 
-    /* Actions stretch full width on row 2 */
+    /* Actions on their own full-width row */
     .player-actions {
       width: 100%;
       justify-content: space-between;
@@ -606,10 +569,8 @@
       border-top: 1px solid rgba(255, 255, 255, 0.07);
     }
 
-    /* Voice menu opens upward, stays on screen */
     .voice-dropdown-menu {
       right: 0;
-      left: auto;
     }
   }
 
