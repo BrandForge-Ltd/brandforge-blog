@@ -110,7 +110,8 @@ const featuredPosts = await client.fetch(featuredPostsQuery);
 
   @media (max-width: 768px) {
     .img-wrapper {
-      aspect-ratio: 16/9;
+      aspect-ratio: 1/1;
+      min-height: 400px;
     }
   }
 
@@ -142,8 +143,14 @@ const featuredPosts = await client.fetch(featuredPostsQuery);
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 3rem 2rem 2rem;
+    padding: 4rem 2rem 2rem;
     color: var(--white);
+  }
+
+  @media (max-width: 768px) {
+    .slide-content {
+      padding: 3rem 1.25rem 1.5rem;
+    }
   }
 
   .slide-title {
