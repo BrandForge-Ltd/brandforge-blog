@@ -63,31 +63,31 @@
   const MODEL_ID = 'onnx-community/Kokoro-82M-v1.0-ONNX';
 
   // ── DOM refs ──────────────────────────────────────────────────────────────
-  const playBtn        = document.getElementById('playBtn') as HTMLButtonElement;
-  const pauseBtn       = document.getElementById('pauseBtn') as HTMLButtonElement;
-  const stopBtn        = document.getElementById('stopBtn') as HTMLButtonElement;
-  const statusText     = document.getElementById('statusText') as HTMLSpanElement;
-  const waveformEl     = document.getElementById('waveform') as HTMLDivElement;
-  const playerContainer= document.getElementById('audioPlayerContainer') as HTMLDivElement;
-  const voiceDropdownBtn = document.getElementById('voiceDropdownBtn') as HTMLButtonElement;
-  const voiceDropdownMenu= document.getElementById('voiceDropdownMenu') as HTMLDivElement;
-  const selectedVoiceLabel = document.getElementById('selectedVoiceLabel') as HTMLSpanElement;
-  const voiceOptions   = document.querySelectorAll<HTMLButtonElement>('.voice-option');
+  const playBtn        = document.getElementById('playBtn');
+  const pauseBtn       = document.getElementById('pauseBtn');
+  const stopBtn        = document.getElementById('stopBtn');
+  const statusText     = document.getElementById('statusText');
+  const waveformEl     = document.getElementById('waveform');
+  const playerContainer= document.getElementById('audioPlayerContainer');
+  const voiceDropdownBtn = document.getElementById('voiceDropdownBtn');
+  const voiceDropdownMenu= document.getElementById('voiceDropdownMenu');
+  const selectedVoiceLabel = document.getElementById('selectedVoiceLabel');
+  const voiceOptions   = document.querySelectorAll('.voice-option');
 
   // ── State ─────────────────────────────────────────────────────────────────
-  let tts: InstanceType<typeof KokoroTTS> | null = null;
+  let tts = null;
   let isModelLoading = false;
   let selectedVoice  = 'af_heart';
 
-  let readableElements: Element[] = [];
+  let readableElements = [];
   let currentElementIndex = 0;
-  let currentAudio: HTMLAudioElement | null = null;
-  let nextAudio: HTMLAudioElement | null = null;
+  let currentAudio = null;
+  let nextAudio = null;
   let isPlaying  = false;
   let isPaused   = false;
 
   // ── UI state machine ─────────────────────────────────────────────────────
-  const setState = (state: string) => {
+  const setState = (state) => {
     const active = state === 'generating' || state === 'playing';
     playBtn.classList.toggle('hidden',  state === 'playing' || state === 'generating');
     pauseBtn.classList.toggle('hidden', state !== 'playing');
@@ -96,7 +96,7 @@
     playerContainer.classList.toggle('is-playing', active);
     voiceDropdownBtn.disabled = active || isModelLoading;
 
-    const labels: Record<string, string> = {
+    const labels = {
       loading:    'Loading…',
       generating: 'Generating…',
       playing:    'Playing',
@@ -132,7 +132,7 @@
   });
 
   // ── Model loader ──────────────────────────────────────────────────────────
-  const loadModel = async (): Promise<InstanceType<typeof KokoroTTS> | null> => {
+  const loadModel = async () => {
     if (tts) return tts;
     if (isModelLoading) return null;
     isModelLoading = true;
@@ -143,7 +143,7 @@
       tts = await KokoroTTS.from_pretrained(MODEL_ID, {
         dtype: 'q8',   // ~86MB quantised — best size/quality balance
         device: 'wasm',
-        progress_callback: ({ status, progress }: { status: string; progress?: number; file?: string }) => {
+        progress_callback: ({ status, progress }) => {
           if (status === 'progress' && progress != null) {
             statusText.textContent = `Loading ${Math.round(progress)}%`;
           }
@@ -161,7 +161,7 @@
   };
 
   // ── Audio helpers ─────────────────────────────────────────────────────────
-  const getReadableElements = (): Element[] => {
+  const getReadableElements = () => {
     if (readableElements.length === 0) {
       readableElements = Array.from(
         document.querySelectorAll('.prose p, .prose h2, .prose h3, .prose li')
@@ -173,7 +173,7 @@
   const resetHighlight = () =>
     getReadableElements().forEach(el => el.classList.remove('reading-highlight'));
 
-  const highlightElement = (index: number) => {
+  const highlightElement = (index) => {
     resetHighlight();
     const els = getReadableElements();
     if (index >= 0 && index < els.length) {
@@ -182,7 +182,7 @@
     }
   };
 
-  const generateAudio = async (text: string): Promise<HTMLAudioElement | null> => {
+  const generateAudio = async (text) => {
     const model = await loadModel();
     if (!model) return null;
     try {
