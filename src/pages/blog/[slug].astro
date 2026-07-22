@@ -79,9 +79,17 @@ if (post.body) {
   description={post.excerpt} 
   image={post.mainImage ? urlFor(post.mainImage).width(1200).height(630).url() : undefined}
 >
-  <div id="progress-container" style="position: sticky; top: 80px; width: 100%; height: 4px; background-color: transparent; z-index: 99; margin-top: -4px;">
-    <div id="progress-bar" style="width: 0%; height: 100%; background-color: var(--orange); transition: width 0.1s ease-out;"></div>
-  </div>
+  <button id="scroll-to-top" class="circular-progress" aria-label="Scroll to top">
+    <svg class="progress-ring" width="50" height="50">
+      <circle class="progress-ring__circle-bg" stroke="var(--border)" stroke-width="3" fill="transparent" r="22" cx="25" cy="25"/>
+      <circle class="progress-ring__circle" stroke="var(--orange)" stroke-width="3" fill="transparent" r="22" cx="25" cy="25"/>
+    </svg>
+    <div class="progress-arrow">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 19V5M5 12l7-7 7 7"/>
+      </svg>
+    </div>
+  </button>
 
   <article class="blog-post">
     <header class="post-header container">
@@ -230,19 +238,39 @@ if (post.body) {
   )}
 
   <script>
-    // Progress Bar
-    const updateProgressBar = () => {
-      const progressBar = document.getElementById('progress-bar');
-      if (!progressBar) return;
+    // Circular Progress & Scroll to Top
+    const circularProgress = document.getElementById('scroll-to-top');
+    const circle = document.querySelector('.progress-ring__circle');
+    
+    if (circularProgress && circle) {
+      // TypeScript is not supported without lang="ts", so we do not use types.
+      const radius = circle.r.baseVal.value;
+      const circumference = radius * 2 * Math.PI;
+      circle.style.strokeDasharray = `${circumference} ${circumference}`;
+      circle.style.strokeDashoffset = circumference;
 
-      const windowScroll = document.documentElement.scrollTop || document.body.scrollTop;
-      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scrolled = (windowScroll / height) * 100;
-      progressBar.style.width = scrolled + '%';
-    };
+      const updateProgress = () => {
+        const windowScroll = document.documentElement.scrollTop || document.body.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (windowScroll / height);
+        
+        const offset = circumference - scrolled * circumference;
+        circle.style.strokeDashoffset = offset;
 
-    window.addEventListener('scroll', updateProgressBar);
-    updateProgressBar();
+        if (windowScroll > 300) {
+          circularProgress.classList.add('visible');
+        } else {
+          circularProgress.classList.remove('visible');
+        }
+      };
+
+      window.addEventListener('scroll', updateProgress);
+      updateProgress();
+
+      circularProgress.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
 
     // Summary Toggle
     const summaryContent = document.getElementById('summaryContent');
@@ -336,6 +364,70 @@ if (post.body) {
 <style>
   html {
     scroll-behavior: smooth;
+  }
+
+  /* Circular Progress & Scroll to top */
+  .circular-progress {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--white);
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+    transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    padding: 0;
+  }
+
+  .circular-progress.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .circular-progress:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    transform: translateY(-2px) scale(1.05);
+  }
+
+  .progress-ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: rotate(-90deg);
+  }
+
+  .progress-ring__circle {
+    stroke-dasharray: 132;
+    stroke-dashoffset: 132;
+    transition: stroke-dashoffset 0.1s linear;
+    stroke-linecap: round;
+  }
+
+  .progress-arrow {
+    color: var(--ink);
+    z-index: 2;
+    display: flex;
+    transition: color 0.3s ease;
+  }
+
+  .circular-progress:hover .progress-arrow {
+    color: var(--orange);
+  }
+
+  @media (max-width: 768px) {
+    .circular-progress {
+      bottom: 1.5rem;
+      right: 1.5rem;
+    }
   }
 
   .blog-post {
