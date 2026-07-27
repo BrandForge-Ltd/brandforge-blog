@@ -80,6 +80,13 @@ export const categoriesQuery = `*[_type == "category" && defined(slug.current)] 
   "slug": slug.current
 }`;
 
+// Single category by slug
+export const categoryBySlugQuery = `*[_type == "category" && slug.current == $slug][0] {
+  _id,
+  title,
+  "slug": slug.current
+}`;
+
 // Related posts (same category, exclude current)
 export const relatedPostsQuery = `*[_type == "post" && $categoryId in categories[]._ref && _id != $postId && defined(publishedAt)] | order(publishedAt desc)[0...3] {
   _id,

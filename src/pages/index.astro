@@ -7,7 +7,9 @@ import Sidebar from '../components/Sidebar.astro';
 import { client } from '../lib/sanity';
 import { postsQuery } from '../lib/queries';
 
-// Fetch initial posts during build
+export const prerender = false;
+
+// Fetch initial posts dynamically
 const posts = await client.fetch(postsQuery, { start: 0, end: 20 });
 const heroPosts = posts.slice(0, 5);
 const feedPosts = posts.slice(5, 17);

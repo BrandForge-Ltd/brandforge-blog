@@ -3,19 +3,16 @@ import Layout from '../../layouts/Layout.astro';
 import PostFeed from '../../components/PostFeed';
 import Sidebar from '../../components/Sidebar.astro';
 import { client } from '../../lib/sanity';
-import { categoriesQuery, postsByCategoryQuery } from '../../lib/queries';
+import { categoryBySlugQuery, postsByCategoryQuery } from '../../lib/queries';
 
-export async function getStaticPaths() {
-  const categories = await client.fetch(categoriesQuery);
-  
-  return categories.map((category: any) => ({
-    params: { slug: category.slug },
-    props: { category },
-  }));
-}
+export const prerender = false;
 
-const { category } = Astro.props;
 const { slug } = Astro.params;
+const category = await client.fetch(categoryBySlugQuery, { slug });
+
+if (!category) {
+  return Astro.redirect('/404');
+}
 
 const posts = await client.fetch(postsByCategoryQuery, {
   categorySlug: slug,
