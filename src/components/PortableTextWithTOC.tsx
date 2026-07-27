@@ -1,6 +1,7 @@
 import React from 'react';
 import { PortableText } from '@portabletext/react';
 import BlogCTA from './BlogCTA';
+import { urlFor } from '../lib/sanity';
 
 // Helper to extract text from portable text
 function extractText(blocks: any[]): string {
@@ -44,7 +45,30 @@ export default function PortableTextWithTOC({ value, currentUrl }: { value: any,
     types: {
       inlineCTA: BlogCTA,
       image: ({ value }: any) => {
-        return <img src={value?.asset?.url || ''} alt={value?.alt || ''} style={{ width: '100%' }} />;
+        if (!value) return null;
+        let imageUrl = value?.asset?.url || '';
+        if (!imageUrl && value?.asset) {
+          try {
+            imageUrl = urlFor(value).width(1200).auto('format').url();
+          } catch (e) {
+            imageUrl = '';
+          }
+        }
+        if (!imageUrl) return null;
+        return (
+          <figure style={{ margin: '2.5rem 0', width: '100%' }}>
+            <img 
+              src={imageUrl} 
+              alt={value?.alt || value?.caption || ''} 
+              style={{ width: '100%', height: 'auto', borderRadius: '1rem', display: 'block', boxShadow: '0 10px 20px -5px rgba(0, 0, 0, 0.08)' }} 
+            />
+            {(value?.caption || value?.alt) && (
+              <figcaption style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--gray)', marginTop: '0.75rem' }}>
+                {value.caption || value.alt}
+              </figcaption>
+            )}
+          </figure>
+        );
       }
     },
     block: {

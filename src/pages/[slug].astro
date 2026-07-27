@@ -72,12 +72,16 @@ if (post.body) {
     }
   });
 }
+
+const heroImage = post.coverImage || post.mainImage;
+const heroImageUrl = heroImage && heroImage.asset ? urlFor(heroImage).width(1600).auto('format').url() : null;
+const ogImageUrl = heroImage && heroImage.asset ? urlFor(heroImage).width(1200).height(630).auto('format').url() : undefined;
 ---
 
 <Layout 
   title={post.title} 
   description={post.excerpt} 
-  image={post.mainImage ? urlFor(post.mainImage).width(1200).height(630).url() : undefined}
+  image={ogImageUrl}
   keywords={post.seoKeywords}
 >
   <button id="scroll-to-top" class="circular-progress" aria-label="Scroll to top">
@@ -141,12 +145,14 @@ if (post.body) {
       </div>
     </header>
 
-    {post.coverImage && (
+    {heroImageUrl && (
       <div class="cover-image-container container">
         <img 
-          src={urlFor(post.coverImage).width(2000).height(1125).url()} 
-          alt={post.coverImage.alt || post.title} 
+          src={heroImageUrl} 
+          alt={heroImage?.alt || post.title} 
           class="cover-image"
+          loading="eager"
+          fetchpriority="high"
         />
       </div>
     )}
@@ -546,13 +552,17 @@ if (post.body) {
   }
 
   .cover-image-container {
-    margin-bottom: 4rem;
+    margin-bottom: 3.5rem;
+    width: 100%;
   }
 
   .cover-image {
     width: 100%;
-    border-radius: 1.5rem;
+    max-height: 560px;
+    object-fit: cover;
+    border-radius: 1.25rem;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    display: block;
   }
 
   /* 3-Column Layout */
