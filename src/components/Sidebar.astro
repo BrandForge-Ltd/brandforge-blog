@@ -58,7 +58,7 @@ const latestPosts = await client.fetch(latestPostsQuery);
           year: 'numeric'
         });
         return (
-          <a href={`/blog/${post.slug.current}`} class="latest-post-card">
+          <a href={`/${post.slug.current}`} class="latest-post-card">
             <div class="latest-post-img">
               {post.coverImage ? (
                 <img src={urlFor(post.coverImage).width(150).height(150).url()} alt={post.title} />

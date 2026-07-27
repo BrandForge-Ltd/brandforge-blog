@@ -37,6 +37,7 @@ export const postBySlugQuery = `*[_type == "post" && slug.current == $slug][0] {
   publishedAt,
   "excerpt": seoDescription,
   seoKeywords,
+  "audioUrl": audioFile.asset->url,
   "coverImage": mainImage,
   body,
   "author": author->{ name, "slug": slug.current, image, bio },

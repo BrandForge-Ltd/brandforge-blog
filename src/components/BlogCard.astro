@@ -23,7 +23,7 @@ const formattedDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
 const readingTime = post.readingTime ? Math.max(1, post.readingTime) : 1;
 ---
 
-<a href={`/blog/${post.slug.current}`} class="blog-card group">
+<a href={`/${post.slug.current}`} class="blog-card group">
   <div class="image-wrapper">
     {post.coverImage ? (
       <img 

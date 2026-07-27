@@ -10,7 +10,7 @@ const featuredPosts = await client.fetch(featuredPostsQuery);
       <div class="carousel-track" id="carouselTrack">
         {featuredPosts.map((post: any) => (
           <div class="carousel-slide group">
-            <a href={`/blog/${post.slug.current}`} class="carousel-card">
+            <a href={`/${post.slug.current}`} class="carousel-card">
               <div class="img-wrapper">
                 {post.coverImage ? (
                   <img src={urlFor(post.coverImage).width(1200).height(600).url()} alt={post.title} />

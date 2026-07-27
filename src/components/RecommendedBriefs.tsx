@@ -41,7 +41,7 @@ export default function RecommendedBriefs({ posts }: { posts: Post[] }) {
             : '';
 
           return (
-            <a key={post._id} href={`/blog/${post.slug.current}`} className="brief-card">
+            <a key={post._id} href={`/${post.slug.current}`} className="brief-card">
               <div className="brief-image-wrapper">
                 {post.coverImage ? (
                   <img 

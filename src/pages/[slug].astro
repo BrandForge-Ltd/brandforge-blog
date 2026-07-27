@@ -1,14 +1,14 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import { client, urlFor } from '../../lib/sanity';
-import { postBySlugQuery, relatedPostsQuery } from '../../lib/queries';
-import PortableTextWithTOC from '../../components/PortableTextWithTOC.tsx';
-import AudioPlayer from '../../components/AudioPlayer.astro';
-import ShareButtons from '../../components/ShareButtons.astro';
-import RelatedCarousel from '../../components/RelatedCarousel.astro';
-import Sidebar from '../../components/Sidebar.astro';
-import MobileTOC from '../../components/MobileTOC.astro';
-import A11yControls from '../../components/A11yControls.astro';
+import Layout from '../layouts/Layout.astro';
+import { client, urlFor } from '../lib/sanity';
+import { postBySlugQuery, relatedPostsQuery } from '../lib/queries';
+import PortableTextWithTOC from '../components/PortableTextWithTOC.tsx';
+import AudioPlayer from '../components/AudioPlayer.astro';
+import ShareButtons from '../components/ShareButtons.astro';
+import RelatedCarousel from '../components/RelatedCarousel.astro';
+import Sidebar from '../components/Sidebar.astro';
+import MobileTOC from '../components/MobileTOC.astro';
+import A11yControls from '../components/A11yControls.astro';
 
 export async function getStaticPaths() {
   const query = `*[_type == "post" && defined(slug.current)][]{ "slug": slug.current }`;
@@ -55,7 +55,7 @@ function extractText(blocks: any[]): string {
 }
 
 const plainTextBody = extractText(post.body);
-const currentUrl = `https://brandforgeinc.com/blog/${slug}`;
+const currentUrl = `https://blog.brandforgeinc.com/${slug}`;
 
 // Extract headings for TOC
 const tocHeadings = [];
@@ -174,7 +174,7 @@ if (post.body) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </button>
           
-          <AudioPlayer />
+          <AudioPlayer audioUrl={post.audioUrl} />
         </div>
 
         <div class="prose">

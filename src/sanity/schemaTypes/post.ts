@@ -65,6 +65,15 @@ export const post = defineType({
       description: 'Comma-separated keywords for SEO',
     }),
     defineField({
+      name: 'audioFile',
+      title: 'Audio Narration File (MP3)',
+      type: 'file',
+      options: {
+        accept: 'audio/*',
+      },
+      description: 'Upload a pre-generated MP3 narration for this article.',
+    }),
+    defineField({
       name: 'body',
       title: 'Body',
       type: 'array',

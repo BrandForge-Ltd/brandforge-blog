@@ -64,7 +64,7 @@ export default function HeroSlider({ posts }: { posts: Post[] }) {
           {currentPost.category && (
             <span className="hero-category">{currentPost.category.title}</span>
           )}
-          <a href={`/blog/${currentPost.slug.current}`}>
+          <a href={`/${currentPost.slug.current}`}>
             <h1 className="hero-title">{currentPost.title}</h1>
           </a>
           {currentPost.excerpt && (

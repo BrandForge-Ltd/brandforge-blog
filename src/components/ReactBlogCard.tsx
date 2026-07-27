@@ -22,7 +22,7 @@ export default function ReactBlogCard({ post }: { post: Post }) {
   const readingTime = post.readingTime ? Math.max(1, post.readingTime) : 1;
 
   return (
-    <a href={`/blog/${post.slug.current}`} className="blog-card group">
+    <a href={`/${post.slug.current}`} className="blog-card group">
       <div className="image-wrapper">
         {post.coverImage ? (
           <img 
