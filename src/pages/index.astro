@@ -12,7 +12,7 @@ export const prerender = false;
 // Fetch initial posts dynamically
 const posts = await client.fetch(postsQuery, { start: 0, end: 20 });
 const heroPosts = posts.slice(0, 5);
-const feedPosts = posts.slice(5, 17);
+const feedPosts = posts.slice(0, 12);
 ---
 
 <Layout title="Blog" description="BrandForge Blog - Insights & Updates">
