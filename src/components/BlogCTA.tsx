@@ -32,30 +32,6 @@ export default function BlogCTA() {
         }}
       />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-        <span 
-          style={{
-            display: 'inline-block',
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--orange, #ff6b00)',
-          }}
-        />
-        <span 
-          style={{
-            fontFamily: 'var(--font-mono, monospace)',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.15em',
-            color: 'rgba(255, 255, 255, 0.6)',
-          }}
-        >
-          BrandForge Strategy
-        </span>
-      </div>
-
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         <h4 
           style={{
