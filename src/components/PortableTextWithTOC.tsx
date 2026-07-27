@@ -17,12 +17,19 @@ export default function PortableTextWithTOC({ value, currentUrl }: { value: any,
   let blocks = Array.isArray(value) ? [...value] : [];
   
   if (blocks.length > 4) {
+    const totalParas = blocks.filter(
+      b => b._type === 'block' && (!b.style || b.style === 'normal')
+    ).length;
+
+    // Place it roughly halfway through the post (at least after the 5th paragraph)
+    const targetPara = Math.max(5, Math.floor(totalParas / 2));
+
     let paraCount = 0;
     let insertIndex = -1;
     for (let i = 0; i < blocks.length; i++) {
       if (blocks[i]._type === 'block' && (!blocks[i].style || blocks[i].style === 'normal')) {
         paraCount++;
-        if (paraCount === 3) {
+        if (paraCount === targetPara) {
           insertIndex = i + 1;
           break;
         }
