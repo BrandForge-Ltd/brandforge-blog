@@ -10,7 +10,14 @@ import Sidebar from '../../components/Sidebar.astro';
 import MobileTOC from '../../components/MobileTOC.astro';
 import A11yControls from '../../components/A11yControls.astro';
 
-export const prerender = false;
+export async function getStaticPaths() {
+  const query = `*[_type == "post" && defined(slug.current)][]{ "slug": slug.current }`;
+  const posts = await client.fetch(query);
+  
+  return posts.map((post: any) => ({
+    params: { slug: post.slug },
+  }));
+}
 
 const { slug } = Astro.params;
 const post = await client.fetch(postBySlugQuery, { slug });
