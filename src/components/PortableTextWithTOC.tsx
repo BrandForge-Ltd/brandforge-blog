@@ -1,5 +1,6 @@
 import React from 'react';
 import { PortableText } from '@portabletext/react';
+import BlogCTA from './BlogCTA';
 
 // Helper to extract text from portable text
 function extractText(blocks: any[]): string {
@@ -13,7 +14,32 @@ function extractText(blocks: any[]): string {
 }
 
 export default function PortableTextWithTOC({ value, currentUrl }: { value: any, currentUrl?: string }) {
+  let blocks = Array.isArray(value) ? [...value] : [];
+  
+  if (blocks.length > 4) {
+    let paraCount = 0;
+    let insertIndex = -1;
+    for (let i = 0; i < blocks.length; i++) {
+      if (blocks[i]._type === 'block' && (!blocks[i].style || blocks[i].style === 'normal')) {
+        paraCount++;
+        if (paraCount === 3) {
+          insertIndex = i + 1;
+          break;
+        }
+      }
+    }
+    if (insertIndex > -1) {
+      blocks.splice(insertIndex, 0, { _type: 'inlineCTA', _key: 'auto-inline-cta' });
+    }
+  }
+
   const portableTextComponents = {
+    types: {
+      inlineCTA: BlogCTA,
+      image: ({ value }: any) => {
+        return <img src={value?.asset?.url || ''} alt={value?.alt || ''} style={{ width: '100%' }} />;
+      }
+    },
     block: {
       h2: ({children, value}: any) => {
         const id = extractText([value]).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -60,5 +86,5 @@ export default function PortableTextWithTOC({ value, currentUrl }: { value: any,
     }
   };
 
-  return <PortableText value={value} components={portableTextComponents} />;
+  return <PortableText value={blocks} components={portableTextComponents} />;
 }

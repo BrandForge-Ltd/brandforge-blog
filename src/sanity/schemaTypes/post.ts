@@ -59,6 +59,12 @@ export const post = defineType({
       description: 'A short summary of the post for SEO and previews.',
     }),
     defineField({
+      name: 'seoKeywords',
+      title: 'SEO Keywords',
+      type: 'string',
+      description: 'Comma-separated keywords for SEO',
+    }),
+    defineField({
       name: 'body',
       title: 'Body',
       type: 'array',

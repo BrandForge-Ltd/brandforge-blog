@@ -36,6 +36,7 @@ export const postBySlugQuery = `*[_type == "post" && slug.current == $slug][0] {
   slug,
   publishedAt,
   "excerpt": seoDescription,
+  seoKeywords,
   "coverImage": mainImage,
   body,
   "author": author->{ name, "slug": slug.current, image, bio },

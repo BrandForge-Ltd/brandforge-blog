@@ -78,6 +78,7 @@ if (post.body) {
   title={post.title} 
   description={post.excerpt} 
   image={post.mainImage ? urlFor(post.mainImage).width(1200).height(630).url() : undefined}
+  keywords={post.seoKeywords}
 >
   <button id="scroll-to-top" class="circular-progress" aria-label="Scroll to top">
     <svg class="progress-ring" width="50" height="50">
