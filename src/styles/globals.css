@@ -298,3 +298,113 @@ a {
   border: 1px dashed var(--border);
   border-radius: 1rem;
 }
+
+/* ==========================================================================
+   Publication Print / PDF Styles
+   ========================================================================== */
+@media print {
+  /* Hide Non-Essential Web UI Elements */
+  header,
+  nav,
+  .mobile-overlay,
+  .back-link,
+  #scroll-to-top,
+  .mobile-toc-fab,
+  .post-actions-mobile,
+  .mobile-share-top,
+  .post-share-sidebar,
+  .post-right-sidebar,
+  .share-buttons,
+  .premium-audio-player,
+  .a11y-controls,
+  .pdf-modal-overlay,
+  .pdf-download-btn,
+  .pdf-btn,
+  .inline-blog-cta,
+  .toggle-summary-btn,
+  .newsletter-widget {
+    display: none !important;
+  }
+
+  /* Reset layout for single-column publication document */
+  body, html {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt !important;
+    line-height: 1.6 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .blog-post {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .post-header {
+    margin-bottom: 2rem !important;
+    padding-bottom: 1.5rem !important;
+    border-bottom: 2px solid #000000 !important;
+  }
+
+  .post-title {
+    font-size: 26pt !important;
+    line-height: 1.2 !important;
+    color: #000000 !important;
+    margin-top: 1rem !important;
+  }
+
+  .cover-image-container {
+    margin-bottom: 2rem !important;
+  }
+
+  .cover-image {
+    max-height: 400px !important;
+    border-radius: 0.5rem !important;
+    box-shadow: none !important;
+  }
+
+  .post-layout {
+    display: block !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .post-main {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .prose p, .prose h2, .prose h3, .prose li {
+    color: #111111 !important;
+    font-size: 11pt !important;
+  }
+
+  .prose h2, .prose h3 {
+    page-break-after: avoid;
+    break-after: avoid;
+    color: #000000 !important;
+  }
+
+  .prose img, figure {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    max-width: 100% !important;
+  }
+
+  /* Footer Attribution */
+  body::after {
+    content: "Published by BrandForge Ltd • https://brandforgeinc.com";
+    display: block;
+    text-align: center;
+    font-family: monospace;
+    font-size: 9pt;
+    color: #666666;
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e5e5;
+  }
+}
