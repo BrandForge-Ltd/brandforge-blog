@@ -114,6 +114,8 @@ const ogImageUrl = heroImage && heroImage.asset ? urlFor(heroImage).width(1200).
         <span class="date">{formattedDate}</span>
         <span style="color: var(--gray); font-size: var(--text-small);">•</span>
         <span style="color: var(--gray); font-size: var(--text-small); font-weight: 600;">{post.readingTime ? Math.max(1, post.readingTime) : 1} min read</span>
+        <span style="color: var(--gray); font-size: var(--text-small);">•</span>
+        <PdfDownloadModal client:load postTitle={post.title} postUrl={currentUrl} layout="inline-meta" />
       </div>
       
       <h1 class="text-display post-title">{post.title}</h1>
@@ -140,8 +142,7 @@ const ogImageUrl = heroImage && heroImage.asset ? urlFor(heroImage).width(1200).
             </div>
           </div>
         )}
-        <div class="mobile-share-top" style="display: flex; align-items: center; gap: 0.75rem;">
-          <PdfDownloadModal client:load postTitle={post.title} postUrl={currentUrl} />
+        <div class="mobile-share-top">
           <ShareButtons url={currentUrl} title={post.title} />
         </div>
       </div>
@@ -162,9 +163,8 @@ const ogImageUrl = heroImage && heroImage.asset ? urlFor(heroImage).width(1200).
     <div class="post-layout container">
       <!-- Left Sidebar (Share) -->
       <aside class="post-share-sidebar">
-        <div class="sticky-share" style="display: flex; flex-direction: column; gap: 1.5rem; align-items: center;">
+        <div class="sticky-share" style="display: flex; flex-direction: column; gap: 2rem; align-items: center;">
           <ShareButtons url={currentUrl} title={post.title} layout="vertical" />
-          <PdfDownloadModal client:load postTitle={post.title} postUrl={currentUrl} layout="vertical" />
           <A11yControls layout="vertical" />
         </div>
       </aside>

@@ -5,7 +5,7 @@ interface PdfDownloadModalProps {
   postTitle: string;
   postUrl?: string;
   buttonClass?: string;
-  layout?: 'default' | 'icon-only' | 'vertical';
+  layout?: 'default' | 'icon-only' | 'vertical' | 'inline-meta';
 }
 
 export default function PdfDownloadModal({ postTitle, postUrl, buttonClass = '', layout = 'default' }: PdfDownloadModalProps) {
@@ -118,7 +118,7 @@ export default function PdfDownloadModal({ postTitle, postUrl, buttonClass = '',
           border: '1px solid rgba(255, 255, 255, 0.15)',
           borderRadius: '1.5rem',
           padding: '2.5rem',
-          maxWidth: '480px',
+          maxWidth: '460px',
           width: '100%',
           color: '#ffffff',
           boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.95)',
@@ -311,7 +311,34 @@ export default function PdfDownloadModal({ postTitle, postUrl, buttonClass = '',
   return (
     <>
       {/* Action Button */}
-      {layout === 'vertical' ? (
+      {layout === 'inline-meta' ? (
+        <button
+          type="button"
+          onClick={handleButtonClick}
+          className="inline-pdf-link"
+          title="Download PDF Executive Report"
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            color: 'var(--orange, #ff6b00)',
+            fontSize: 'var(--text-small, 0.875rem)',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.35rem',
+            fontFamily: 'inherit',
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          <span>PDF Edition</span>
+        </button>
+      ) : layout === 'vertical' ? (
         <button
           type="button"
           onClick={handleButtonClick}
