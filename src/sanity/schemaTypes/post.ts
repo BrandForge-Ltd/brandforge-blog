@@ -51,6 +51,7 @@ export const post = defineType({
       name: 'publishedAt',
       title: 'Published at',
       type: 'datetime',
+      initialValue: () => new Date().toISOString(),
     }),
     defineField({
       name: 'seoDescription',
