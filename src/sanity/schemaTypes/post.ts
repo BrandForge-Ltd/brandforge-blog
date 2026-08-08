@@ -115,6 +115,19 @@ export const post = defineType({
               type: 'string',
             },
           ],
+          preview: {
+            select: {
+              title: 'caption',
+              subtitle: 'url',
+            },
+            prepare(selection) {
+              const { title, subtitle } = selection;
+              return {
+                title: title || 'YouTube / Video Embed',
+                subtitle: subtitle || 'No URL specified',
+              };
+            },
+          },
         },
         {
           name: 'twitter',
@@ -128,6 +141,17 @@ export const post = defineType({
               description: 'Link to tweet on x.com or twitter.com',
             },
           ],
+          preview: {
+            select: {
+              subtitle: 'url',
+            },
+            prepare(selection) {
+              return {
+                title: 'Post on X (Twitter)',
+                subtitle: selection.subtitle || 'No URL specified',
+              };
+            },
+          },
         },
         {
           name: 'callout',
@@ -145,6 +169,18 @@ export const post = defineType({
               type: 'string',
             },
           ],
+          preview: {
+            select: {
+              title: 'text',
+              subtitle: 'attribution',
+            },
+            prepare(selection) {
+              return {
+                title: selection.title ? `"${selection.title.substring(0, 50)}..."` : 'Callout Box',
+                subtitle: selection.subtitle ? `— ${selection.subtitle}` : '',
+              };
+            },
+          },
         },
       ],
     }),
