@@ -85,6 +85,66 @@ export const post = defineType({
         {
           type: 'image',
           options: { hotspot: true },
+          fields: [
+            {
+              name: 'alt',
+              type: 'string',
+              title: 'Alternative text',
+            },
+            {
+              name: 'caption',
+              type: 'string',
+              title: 'Caption',
+            },
+          ],
+        },
+        {
+          name: 'youtube',
+          title: 'YouTube / Video Embed',
+          type: 'object',
+          fields: [
+            {
+              name: 'url',
+              title: 'Video URL',
+              type: 'url',
+              description: 'YouTube or Vimeo URL (e.g. https://www.youtube.com/watch?v=... or https://youtu.be/...)',
+            },
+            {
+              name: 'caption',
+              title: 'Caption',
+              type: 'string',
+            },
+          ],
+        },
+        {
+          name: 'twitter',
+          title: 'Twitter / X Tweet Embed',
+          type: 'object',
+          fields: [
+            {
+              name: 'url',
+              title: 'Tweet URL',
+              type: 'url',
+              description: 'Link to tweet on x.com or twitter.com',
+            },
+          ],
+        },
+        {
+          name: 'callout',
+          title: 'Callout / Quote Box',
+          type: 'object',
+          fields: [
+            {
+              name: 'text',
+              title: 'Quote / Highlight Text',
+              type: 'text',
+            },
+            {
+              name: 'attribution',
+              title: 'Author / Attribution',
+              type: 'string',
+            },
+          ],
         },
       ],
     }),
