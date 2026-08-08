@@ -3,11 +3,11 @@ import { PortableText } from '@portabletext/react';
 import BlogCTA from './BlogCTA';
 import { urlFor } from '../lib/sanity';
 
-// Helper to extract text from portable text
+// Helper to extract plain text from portable text
 function extractText(blocks: any[]): string {
   if (!blocks) return '';
   return blocks
-    .filter(val => val._type === 'block')
+    .filter(val => val && val._type === 'block')
     .map(block => {
       return block.children?.map((child: any) => child.text).join('') || '';
     })
@@ -176,16 +176,17 @@ export default function PortableTextWithTOC({ value, currentUrl }: { value: any,
           <aside style={{
             margin: '2.5rem 0',
             padding: '1.75rem 2rem',
-            backgroundColor: 'rgba(255, 107, 0, 0.04)',
+            backgroundColor: 'rgba(255, 107, 0, 0.05)',
             borderLeft: '4px solid var(--orange, #ff6b00)',
             borderRadius: '0 1rem 1rem 0',
           }}>
             <p style={{
               margin: 0,
-              fontSize: '1.125rem',
+              fontSize: '1.25rem',
               lineHeight: 1.6,
-              color: 'var(--white)',
+              color: 'var(--ink, #0a0a0c)',
               fontStyle: 'italic',
+              fontFamily: 'var(--font-serif, serif)',
             }}>
               "{value.text}"
             </p>
@@ -194,7 +195,7 @@ export default function PortableTextWithTOC({ value, currentUrl }: { value: any,
                 display: 'block',
                 marginTop: '0.75rem',
                 fontSize: '0.875rem',
-                fontWeight: 600,
+                fontWeight: 700,
                 color: 'var(--orange, #ff6b00)',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
@@ -215,38 +216,51 @@ export default function PortableTextWithTOC({ value, currentUrl }: { value: any,
         const id = extractText([value]).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         return <h3 id={id}>{children}</h3>;
       },
-      blockquote: ({children, value}: any) => {
-        const text = extractText([value]);
-        const tweetIntent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`"${text}"`)}${currentUrl ? `&url=${encodeURIComponent(currentUrl)}` : ''}`;
-        
+      blockquote: ({children}: any) => {
         return (
-          <blockquote className="click-to-tweet-block" style={{ position: 'relative' }}>
-            <div className="quote-content">{children}</div>
-            <a 
-              href={tweetIntent}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                marginTop: '1rem',
-                color: 'var(--orange)',
-                fontWeight: 700,
-                fontSize: '0.875rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                textDecoration: 'none',
-              }}
-              className="click-to-tweet-link"
-              title="Click to Tweet"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-              Click to Tweet
-            </a>
+          <blockquote style={{
+            margin: '2.5rem 0',
+            padding: '1.75rem 2rem',
+            backgroundColor: 'var(--off-white, #f9f9fb)',
+            borderLeft: '4px solid var(--orange, #ff6b00)',
+            borderRadius: '0 1rem 1rem 0',
+            fontFamily: 'var(--font-serif, serif)',
+            fontSize: '1.25rem',
+            lineHeight: 1.6,
+            color: 'var(--ink, #0a0a0c)',
+            fontStyle: 'italic',
+          }}>
+            {children}
           </blockquote>
+        );
+      }
+    },
+    marks: {
+      link: ({children, value}: any) => {
+        const rel = !value.href.startsWith('/') ? 'noreferrer noopener' : undefined;
+        const target = !value.href.startsWith('/') ? '_blank' : undefined;
+        return (
+          <a href={value.href} rel={rel} target={target} style={{
+            color: 'var(--orange, #ff6b00)',
+            textDecoration: 'underline',
+            textUnderlineOffset: '3px',
+            fontWeight: 500,
+          }}>
+            {children}
+          </a>
+        );
+      },
+      code: ({children}: any) => {
+        return (
+          <code style={{
+            backgroundColor: 'rgba(0,0,0,0.06)',
+            padding: '0.2rem 0.4rem',
+            borderRadius: '4px',
+            fontFamily: 'var(--font-mono, monospace)',
+            fontSize: '0.9em',
+          }}>
+            {children}
+          </code>
         );
       }
     }
