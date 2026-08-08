@@ -99,88 +99,13 @@ export const post = defineType({
           ],
         },
         {
-          name: 'youtube',
-          title: 'YouTube / Video Embed',
-          type: 'object',
-          fields: [
-            {
-              name: 'url',
-              title: 'Video URL',
-              type: 'url',
-              description: 'YouTube or Vimeo URL (e.g. https://www.youtube.com/watch?v=... or https://youtu.be/...)',
-            },
-            {
-              name: 'caption',
-              title: 'Caption',
-              type: 'string',
-            },
-          ],
-          preview: {
-            select: {
-              title: 'caption',
-              subtitle: 'url',
-            },
-            prepare(selection) {
-              const { title, subtitle } = selection;
-              return {
-                title: title || 'YouTube / Video Embed',
-                subtitle: subtitle || 'No URL specified',
-              };
-            },
-          },
+          type: 'youtube',
         },
         {
-          name: 'twitter',
-          title: 'Twitter / X Tweet Embed',
-          type: 'object',
-          fields: [
-            {
-              name: 'url',
-              title: 'Tweet URL',
-              type: 'url',
-              description: 'Link to tweet on x.com or twitter.com',
-            },
-          ],
-          preview: {
-            select: {
-              subtitle: 'url',
-            },
-            prepare(selection) {
-              return {
-                title: 'Post on X (Twitter)',
-                subtitle: selection.subtitle || 'No URL specified',
-              };
-            },
-          },
+          type: 'twitter',
         },
         {
-          name: 'callout',
-          title: 'Callout / Quote Box',
-          type: 'object',
-          fields: [
-            {
-              name: 'text',
-              title: 'Quote / Highlight Text',
-              type: 'text',
-            },
-            {
-              name: 'attribution',
-              title: 'Author / Attribution',
-              type: 'string',
-            },
-          ],
-          preview: {
-            select: {
-              title: 'text',
-              subtitle: 'attribution',
-            },
-            prepare(selection) {
-              return {
-                title: selection.title ? `"${selection.title.substring(0, 50)}..."` : 'Callout Box',
-                subtitle: selection.subtitle ? `— ${selection.subtitle}` : '',
-              };
-            },
-          },
+          type: 'callout',
         },
       ],
     }),
