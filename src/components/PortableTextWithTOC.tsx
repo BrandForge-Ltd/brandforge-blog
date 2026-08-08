@@ -30,18 +30,24 @@ function getEmbedUrl(url: string): string | null {
   return null;
 }
 
-// Default Official Twitter / X Embed Component
+// Default Fast Official Twitter / X Embed Component
 function TwitterEmbed({ url }: { url: string }) {
   useEffect(() => {
-    if ((window as any).twttr && (window as any).twttr.widgets) {
-      (window as any).twttr.widgets.load();
-    }
+    const trigger = () => {
+      if ((window as any).twttr && (window as any).twttr.widgets) {
+        (window as any).twttr.widgets.load();
+      }
+    };
+    trigger();
+    // Run after a micro-tick in case Twitter SDK was parsing
+    const timer = setTimeout(trigger, 100);
+    return () => clearTimeout(timer);
   }, [url]);
 
   if (!url) return null;
 
   return (
-    <div style={{ margin: '2.5rem 0', display: 'flex', justifyContent: 'center', width: '100%' }}>
+    <div style={{ margin: '2rem 0', display: 'flex', justifyContent: 'center', width: '100%', minHeight: '150px' }}>
       <blockquote className="twitter-tweet" data-dnt="true" style={{ margin: '0 auto' }}>
         <a href={url}>Loading post from X...</a>
       </blockquote>
@@ -51,7 +57,7 @@ function TwitterEmbed({ url }: { url: string }) {
 
 export default function PortableTextWithTOC({ value, currentUrl }: { value: any, currentUrl?: string }) {
   useEffect(() => {
-    // Re-scan for any Twitter embeds in the article
+    // Immediate trigger for all Twitter widgets on the page
     if ((window as any).twttr && (window as any).twttr.widgets) {
       (window as any).twttr.widgets.load();
     }
@@ -156,16 +162,18 @@ export default function PortableTextWithTOC({ value, currentUrl }: { value: any,
         if (!value?.text) return null;
         return (
           <blockquote style={{
-            margin: '2.5rem 0',
-            paddingLeft: '1.5rem',
-            borderLeft: '3px solid var(--orange, #ff6b00)',
+            margin: '2.5rem auto',
+            padding: '1.25rem 1.5rem',
+            border: 'none',
             fontFamily: 'var(--font-serif, Georgia, serif)',
-            fontSize: '1.25rem',
+            fontSize: '1.35rem',
             lineHeight: 1.65,
             fontStyle: 'italic',
             color: 'var(--ink, #0a0a0c)',
+            textAlign: 'center',
+            maxWidth: '90%',
           }}>
-            <p style={{ margin: 0 }}>"{value.text}"</p>
+            <p style={{ margin: 0 }}>“{value.text}”</p>
             {value.attribution && (
               <cite style={{
                 display: 'block',
@@ -195,14 +203,16 @@ export default function PortableTextWithTOC({ value, currentUrl }: { value: any,
       blockquote: ({children}: any) => {
         return (
           <blockquote style={{
-            margin: '2.5rem 0',
-            paddingLeft: '1.5rem',
-            borderLeft: '3px solid var(--orange, #ff6b00)',
+            margin: '2.5rem auto',
+            padding: '1.25rem 1.5rem',
+            border: 'none',
             fontFamily: 'var(--font-serif, Georgia, serif)',
-            fontSize: '1.25rem',
+            fontSize: '1.35rem',
             lineHeight: 1.65,
             fontStyle: 'italic',
             color: 'var(--ink, #0a0a0c)',
+            textAlign: 'center',
+            maxWidth: '90%',
           }}>
             {children}
           </blockquote>

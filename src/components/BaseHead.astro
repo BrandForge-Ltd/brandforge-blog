@@ -19,6 +19,12 @@ const { title, description, image = '/brandforge-logo.png', keywords } = Astro.p
 <link rel="apple-touch-icon" href="/favicon-192.png" />
 <meta name="generator" content={Astro.generator} />
 
+<!-- Preconnect to Twitter/X CDNs for instant embed rendering -->
+<link rel="preconnect" href="https://platform.twitter.com" crossorigin />
+<link rel="preconnect" href="https://syndication.twitter.com" crossorigin />
+<link rel="dns-prefetch" href="https://platform.twitter.com" />
+<link rel="dns-prefetch" href="https://syndication.twitter.com" />
+
 <!-- Primary Meta Tags -->
 <title>{title} | BrandForge Blog</title>
 <meta name="title" content={title} />

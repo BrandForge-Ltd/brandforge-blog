@@ -733,16 +733,17 @@ const ogImageUrl = heroImage && heroImage.asset ? urlFor(heroImage).width(1200).
   }
 
   .prose :global(blockquote) {
-    border-left: 4px solid var(--orange);
-    padding-left: 1.5rem;
-    margin: 2.5rem 0;
+    border: none;
+    margin: 2.5rem auto;
+    padding: 1.25rem 1.5rem;
     font-family: var(--font-serif);
-    font-size: 1.5rem;
+    font-size: 1.35rem;
+    line-height: 1.65;
     font-style: italic;
     color: var(--ink);
-    background-color: var(--off-white);
-    padding: 1.5rem 1.5rem 1.5rem 2rem;
-    border-radius: 0 1rem 1rem 0;
+    text-align: center;
+    background: transparent;
+    max-width: 90%;
   }
   
   .prose :global(img) {
